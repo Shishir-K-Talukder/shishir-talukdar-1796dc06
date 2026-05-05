@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { useSiteImages, useUploadImage } from "@/hooks/useSiteContent";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Image as ImageIcon, Upload, Loader2, Check, FolderGit2 } from "lucide-react";
+import { Image as ImageIcon, Upload, Loader2, Check, FolderGit2, Github } from "lucide-react";
 import { toast } from "sonner";
 
 interface ImagePickerProps {
@@ -23,6 +24,11 @@ export function ImagePicker({ value, onChange, label = "Image" }: ImagePickerPro
   const [repoImages, setRepoImages] = useState<Array<{ name: string; file: string; alt?: string; category?: string }>>([]);
   const [repoLoading, setRepoLoading] = useState(false);
   const [repoError, setRepoError] = useState<string | null>(null);
+  const [ghFile, setGhFile] = useState<File | null>(null);
+  const [ghName, setGhName] = useState("");
+  const [ghAlt, setGhAlt] = useState("");
+  const [ghCategory, setGhCategory] = useState("general");
+  const [ghUploading, setGhUploading] = useState(false);
 
   const baseUrl = (import.meta.env.BASE_URL || "/").replace(/\/$/, "");
   const repoBase = `${baseUrl}/uploads`;
@@ -54,6 +60,56 @@ export function ImagePicker({ value, onChange, label = "Image" }: ImagePickerPro
       }
     } catch (err: any) {
       toast.error(err.message);
+    }
+  };
+
+  const fileToBase64 = (f: File): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = reader.result as string;
+        resolve(result.split(",")[1] || "");
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(f);
+    });
+
+  const reloadRepoManifest = () => {
+    fetch(`${repoBase}/manifest.json?t=${Date.now()}`, { cache: "no-store" })
+      .then((r) => r.ok ? r.json() : { images: [] })
+      .then((data) => setRepoImages(Array.isArray(data?.images) ? data.images : []))
+      .catch(() => {});
+  };
+
+  const handleGithubUpload = async () => {
+    if (!ghFile) return;
+    setGhUploading(true);
+    try {
+      const safeName = (ghFile.name || "image").replace(/[^a-zA-Z0-9._-]/g, "_");
+      const contentBase64 = await fileToBase64(ghFile);
+      const { data, error } = await supabase.functions.invoke("github-upload", {
+        body: {
+          filename: safeName,
+          contentBase64,
+          name: ghName || safeName,
+          alt: ghAlt || ghName || safeName,
+          category: ghCategory,
+        },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast.success("Pushed to GitHub! It may take a moment to deploy.");
+      const url = `${repoBase}/${data.file}`;
+      onChange(url);
+      setGhFile(null);
+      setGhName("");
+      setGhAlt("");
+      reloadRepoManifest();
+      setOpen(false);
+    } catch (err: any) {
+      toast.error(err.message || "GitHub upload failed");
+    } finally {
+      setGhUploading(false);
     }
   };
 
@@ -96,6 +152,7 @@ export function ImagePicker({ value, onChange, label = "Image" }: ImagePickerPro
             <TabsList className="mb-4">
               <TabsTrigger value="library">Image Library</TabsTrigger>
               <TabsTrigger value="repo">Repo Images</TabsTrigger>
+              <TabsTrigger value="github">Push to GitHub</TabsTrigger>
               <TabsTrigger value="upload">Upload New</TabsTrigger>
             </TabsList>
 
@@ -185,6 +242,45 @@ export function ImagePicker({ value, onChange, label = "Image" }: ImagePickerPro
               <Button onClick={handleUpload} disabled={upload.isPending || !file || !name}>
                 {upload.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Upload className="h-4 w-4 mr-1" />}
                 Upload
+              </Button>
+            </TabsContent>
+
+            <TabsContent value="github" className="space-y-3">
+              <div className="flex items-start gap-2 rounded-lg border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
+                <Github className="h-4 w-4 mt-0.5 shrink-0 text-primary" />
+                <div>
+                  Uploads the file to <code className="font-mono">public/uploads/</code> in your GitHub repo and updates <code className="font-mono">manifest.json</code> automatically. Requires GitHub secrets configured in Admin → GitHub.
+                </div>
+              </div>
+              <div>
+                <Label>Display name (optional)</Label>
+                <Input value={ghName} onChange={(e) => setGhName(e.target.value)} placeholder="e.g. Lab photo 2025" />
+              </div>
+              <div>
+                <Label>Alt text (optional)</Label>
+                <Input value={ghAlt} onChange={(e) => setGhAlt(e.target.value)} placeholder="Description for SEO/accessibility" />
+              </div>
+              <div>
+                <Label>Category</Label>
+                <select
+                  value={ghCategory}
+                  onChange={(e) => setGhCategory(e.target.value)}
+                  className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm"
+                >
+                  <option value="general">General</option>
+                  <option value="profile">Profile</option>
+                  <option value="hero">Hero</option>
+                  <option value="research">Research</option>
+                  <option value="blog">Blog</option>
+                </select>
+              </div>
+              <div>
+                <Label>File</Label>
+                <Input type="file" accept="image/*" onChange={(e) => setGhFile(e.target.files?.[0] || null)} />
+              </div>
+              <Button onClick={handleGithubUpload} disabled={ghUploading || !ghFile}>
+                {ghUploading ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Github className="h-4 w-4 mr-1" />}
+                Push to GitHub
               </Button>
             </TabsContent>
           </Tabs>

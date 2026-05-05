@@ -2,7 +2,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import {
   LogOut, Image, Lock, Microscope, BookOpen,
-  Building2, PenSquare, Megaphone, BarChart3, PanelLeftClose, PanelLeft, Tag, Shield, Mail, UserCircle,
+  Building2, PenSquare, Megaphone, BarChart3, PanelLeftClose, PanelLeft, Tag, Shield, Mail, UserCircle, Github,
 } from "lucide-react";
 import ImageManager from "./ImageManager";
 import ChangePassword from "./ChangePassword";
@@ -16,6 +16,7 @@ import CategoriesEditor from "./CategoriesEditor";
 import RoleManager from "./RoleManager";
 import SmtpSettings from "./SmtpSettings";
 import ProfileEditor from "./ProfileEditor";
+import GithubSettings from "./GithubSettings";
 import { SktLogo } from "@/components/SktLogo";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
@@ -29,6 +30,7 @@ const navItems = [
   { id: "publications", label: "Publications", icon: BookOpen },
   { id: "collaborations", label: "Collaborations", icon: Building2 },
   { id: "images", label: "Media", icon: Image },
+  { id: "github", label: "GitHub", icon: Github },
   { id: "ads", label: "Ads", icon: Megaphone },
   { id: "smtp", label: "Email / SMTP", icon: Mail },
   { id: "roles", label: "Roles", icon: Shield },
@@ -44,6 +46,7 @@ const panels: Record<string, React.FC> = {
   publications: PublicationsEditor,
   collaborations: CollaborationsEditor,
   images: ImageManager,
+  github: GithubSettings,
   ads: AdsEditor,
   smtp: SmtpSettings,
   roles: RoleManager,
