@@ -5,6 +5,35 @@ const corsHeaders = {
 
 const GH_API = "https://api.github.com";
 
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+
+function sanitizeOwner(v: string) {
+  // Accept either "owner" or a URL like https://github.com/owner/repo
+  const m = v.match(/github\.com\/([^/]+)/i);
+  return (m ? m[1] : v).trim().replace(/^\/+|\/+$/g, "");
+}
+function sanitizeRepo(v: string) {
+  const m = v.match(/github\.com\/[^/]+\/([^/?#]+)/i);
+  return (m ? m[1] : v).trim().replace(/\.git$/i, "").replace(/^\/+|\/+$/g, "");
+}
+
+async function loadConfig() {
+  // Prefer DB-stored settings; fall back to env secrets
+  const SUPA_URL = Deno.env.get("SUPABASE_URL");
+  const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  let dbRow: any = null;
+  if (SUPA_URL && SERVICE_KEY) {
+    const admin = createClient(SUPA_URL, SERVICE_KEY);
+    const { data } = await admin.from("github_settings").select("*").limit(1).maybeSingle();
+    dbRow = data;
+  }
+  const owner = sanitizeOwner(dbRow?.owner || Deno.env.get("GITHUB_OWNER") || "");
+  const repo = sanitizeRepo(dbRow?.repo || Deno.env.get("GITHUB_REPO") || "");
+  const branch = (dbRow?.branch || Deno.env.get("GITHUB_BRANCH") || "main").trim();
+  const pat = (dbRow?.pat || Deno.env.get("GITHUB_PAT") || "").trim();
+  return { owner, repo, branch, pat };
+}
+
 interface UploadBody {
   filename: string;       // e.g. "my-photo.jpg"
   contentBase64: string;  // base64 (no data: prefix)
@@ -35,14 +64,11 @@ async function ghFetch(path: string, token: string, init: RequestInit = {}) {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
-  const PAT = Deno.env.get("GITHUB_PAT");
-  const OWNER = Deno.env.get("GITHUB_OWNER");
-  const REPO = Deno.env.get("GITHUB_REPO");
-  const BRANCH = Deno.env.get("GITHUB_BRANCH") || "main";
+  const { pat: PAT, owner: OWNER, repo: REPO, branch: BRANCH } = await loadConfig();
 
   if (!PAT || !OWNER || !REPO) {
     return new Response(
-      JSON.stringify({ error: "GitHub secrets missing. Set GITHUB_PAT, GITHUB_OWNER, GITHUB_REPO." }),
+      JSON.stringify({ error: "GitHub settings missing. Set owner, repo and PAT in Admin → GitHub." }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
