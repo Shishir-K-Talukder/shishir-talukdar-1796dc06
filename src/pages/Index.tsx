@@ -2,22 +2,56 @@ import { Link } from "react-router-dom";
 import { ArrowRight, BookOpen, Users, FlaskConical, Microscope, Bug, Leaf, GraduationCap, Award } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { BentoCard } from "@/components/BentoCard";
+import { CountUp } from "@/components/CountUp";
 import { useProfile } from "@/hooks/useProfile";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useEffect } from "react";
 import profileFallback from "@/assets/profile-placeholder.jpg";
 import labHeroImg from "@/assets/lab-hero.jpg";
 import researchAmrImg from "@/assets/research-amr.jpg";
 import researchEcoImg from "@/assets/research-ecology.jpg";
 
-const stats = [
-  { value: "09+", label: "Research Projects", icon: FlaskConical },
-  { value: "94.8%", label: "Success Rate", icon: Award },
-  { value: "03+", label: "Global Partners", icon: Users },
-  { value: "2+", label: "Years Research", icon: GraduationCap },
-];
-
 export default function Index() {
   const profile = useProfile();
   const profileImg = profile.profileImage || profileFallback;
+
+  const { data: counts, refetch } = useQuery({
+    queryKey: ["home-counts"],
+    queryFn: async () => {
+      const [research, publications, collaborations] = await Promise.all([
+        supabase.from("research_projects").select("*", { count: "exact", head: true }),
+        supabase.from("publications").select("*", { count: "exact", head: true }),
+        supabase.from("collaborations").select("*", { count: "exact", head: true }),
+      ]);
+      return {
+        research: research.count ?? 0,
+        publications: publications.count ?? 0,
+        collaborations: collaborations.count ?? 0,
+      };
+    },
+  });
+
+  // Subscribe to realtime changes so the homepage updates instantly
+  useEffect(() => {
+    const channel = supabase
+      .channel("home-counts-changes")
+      .on("postgres_changes", { event: "*", schema: "public", table: "research_projects" }, () => refetch())
+      .on("postgres_changes", { event: "*", schema: "public", table: "publications" }, () => refetch())
+      .on("postgres_changes", { event: "*", schema: "public", table: "collaborations" }, () => refetch())
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [refetch]);
+
+  const stats = [
+    { value: counts?.research ?? 0, label: "Research Projects", icon: FlaskConical },
+    { value: counts?.publications ?? 0, label: "Publications", icon: BookOpen },
+    { value: counts?.collaborations ?? 0, label: "Collaborations", icon: Users },
+    { value: 2, label: "Years Research", icon: GraduationCap },
+  ];
+
   return (
     <div className="container py-12 md:py-20">
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -70,7 +104,7 @@ export default function Index() {
         {stats.map((s, i) => (
           <BentoCard key={s.label} className="text-center flex flex-col items-center justify-center gap-2" delay={0.1 + i * 0.05}>
             <s.icon className="h-5 w-5 text-primary/60" />
-            <span className="text-3xl md:text-4xl font-bold font-mono text-primary">{s.value}</span>
+            <CountUp to={s.value} className="text-3xl md:text-4xl font-bold font-mono text-primary" />
             <span className="text-sm text-muted-foreground">{s.label}</span>
           </BentoCard>
         ))}
@@ -139,12 +173,12 @@ export default function Index() {
         <BentoCard className="md:col-span-2 grid gap-4 sm:grid-cols-2" delay={0.5}>
           <Link to="/publications" className="flex min-h-[9rem] flex-col items-center justify-center gap-2 rounded-2xl border bg-secondary/30 p-5 text-center hover:border-primary/30 transition-colors">
             <BookOpen className="h-6 w-6 text-primary" />
-            <span className="text-2xl font-bold font-mono">1+</span>
+            <CountUp to={counts?.publications ?? 0} className="text-2xl font-bold font-mono" />
             <span className="text-sm text-muted-foreground">Publications</span>
           </Link>
           <Link to="/collaborations" className="flex min-h-[9rem] flex-col items-center justify-center gap-2 rounded-2xl border bg-secondary/30 p-5 text-center hover:border-primary/30 transition-colors">
             <Users className="h-6 w-6 text-accent" />
-            <span className="text-2xl font-bold font-mono">8+</span>
+            <CountUp to={counts?.collaborations ?? 0} className="text-2xl font-bold font-mono" />
             <span className="text-sm text-muted-foreground">Collaborations</span>
           </Link>
         </BentoCard>
