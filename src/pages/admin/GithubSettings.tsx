@@ -1,13 +1,61 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, CheckCircle2, XCircle, Github, ExternalLink } from "lucide-react";
+import { Loader2, CheckCircle2, XCircle, Github, ExternalLink, Save, Eye, EyeOff } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 export default function GithubSettings() {
+  const qc = useQueryClient();
   const [checking, setChecking] = useState(false);
   const [status, setStatus] = useState<{ ok: boolean; owner?: string; repo?: string; branch?: string; repoInfo?: any; error?: string } | null>(null);
+  const [showPat, setShowPat] = useState(false);
+  const [form, setForm] = useState({ owner: "", repo: "", branch: "main", pat: "" });
+
+  const { data: settings, isLoading } = useQuery({
+    queryKey: ["github-settings"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("github_settings").select("*").limit(1).maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  useEffect(() => {
+    if (settings) {
+      setForm({
+        owner: settings.owner || "",
+        repo: settings.repo || "",
+        branch: settings.branch || "main",
+        pat: settings.pat || "",
+      });
+    }
+  }, [settings]);
+
+  const save = useMutation({
+    mutationFn: async () => {
+      // Strip URLs to bare names
+      const owner = (form.owner.match(/github\.com\/([^/]+)/i)?.[1] || form.owner).replace(/^\/+|\/+$/g, "").trim();
+      const repo = (form.repo.match(/github\.com\/[^/]+\/([^/?#]+)/i)?.[1] || form.repo).replace(/\.git$/i, "").replace(/^\/+|\/+$/g, "").trim();
+      const payload = { owner, repo, branch: form.branch.trim() || "main", pat: form.pat.trim(), updated_at: new Date().toISOString() };
+      if (settings?.id) {
+        const { error } = await supabase.from("github_settings").update(payload).eq("id", settings.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("github_settings").insert(payload);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      toast.success("GitHub settings saved");
+      qc.invalidateQueries({ queryKey: ["github-settings"] });
+      setStatus(null);
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
 
   const checkConfig = async () => {
     setChecking(true);
@@ -36,21 +84,73 @@ export default function GithubSettings() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Configuration</CardTitle>
+          <CardTitle className="text-base">Credentials</CardTitle>
+          <CardDescription>Edit GitHub PAT and repo info here. Saved to your secure backend.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <p className="text-sm text-muted-foreground">
-            Your GitHub credentials are stored as encrypted server-side secrets:
-            <code className="ml-1 font-mono text-xs">GITHUB_PAT</code>,{" "}
-            <code className="font-mono text-xs">GITHUB_OWNER</code>,{" "}
-            <code className="font-mono text-xs">GITHUB_REPO</code>,{" "}
-            <code className="font-mono text-xs">GITHUB_BRANCH</code>.
-          </p>
+          {isLoading ? (
+            <p className="text-sm text-muted-foreground">Loading…</p>
+          ) : (
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Owner / Username</Label>
+                  <Input
+                    placeholder="Shishir-K-Talukder"
+                    value={form.owner}
+                    onChange={(e) => setForm((p) => ({ ...p, owner: e.target.value }))}
+                  />
+                  <p className="text-[10px] text-muted-foreground">Just the username, not the full URL.</p>
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Repository</Label>
+                  <Input
+                    placeholder="shishir-talukdar"
+                    value={form.repo}
+                    onChange={(e) => setForm((p) => ({ ...p, repo: e.target.value }))}
+                  />
+                  <p className="text-[10px] text-muted-foreground">Just the repo name (no URL, no .git).</p>
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Branch</Label>
+                  <Input
+                    placeholder="main"
+                    value={form.branch}
+                    onChange={(e) => setForm((p) => ({ ...p, branch: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Personal Access Token (PAT)</Label>
+                  <div className="relative">
+                    <Input
+                      type={showPat ? "text" : "password"}
+                      placeholder="github_pat_..."
+                      value={form.pat}
+                      onChange={(e) => setForm((p) => ({ ...p, pat: e.target.value }))}
+                    />
+                    <button
+                      type="button"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      onClick={() => setShowPat(!showPat)}
+                    >
+                      {showPat ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                </div>
+              </div>
 
-          <Button onClick={checkConfig} disabled={checking}>
-            {checking ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
-            Test Connection
-          </Button>
+              <div className="flex flex-wrap gap-2">
+                <Button onClick={() => save.mutate()} disabled={save.isPending}>
+                  {save.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
+                  Save Settings
+                </Button>
+                <Button variant="outline" onClick={checkConfig} disabled={checking}>
+                  {checking ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+                  Test Connection
+                </Button>
+              </div>
+            </>
+          )}
 
           {status && (
             <div className={`rounded-lg border p-3 text-sm ${status.ok ? "border-primary/40 bg-primary/5" : "border-destructive/40 bg-destructive/5"}`}>
@@ -65,7 +165,7 @@ export default function GithubSettings() {
                   <div>Visibility: {status.repoInfo?.private ? "Private" : "Public"}</div>
                 </div>
               )}
-              {!status.ok && <div className="mt-1 text-xs text-destructive">{status.error}</div>}
+              {!status.ok && <div className="mt-1 text-xs text-destructive break-all">{status.error}</div>}
             </div>
           )}
         </CardContent>
@@ -73,16 +173,14 @@ export default function GithubSettings() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">How to update credentials</CardTitle>
+          <CardTitle className="text-base">How to get a GitHub PAT</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3 text-sm">
-          <p className="text-muted-foreground">
-            For security, GitHub PAT and repo settings are stored as backend secrets and can only be edited from the Lovable Cloud secrets panel.
-          </p>
           <ol className="list-decimal list-inside space-y-1 text-muted-foreground">
-            <li>Generate a new fine-grained PAT at GitHub → Settings → Developer settings → Personal access tokens.</li>
-            <li>Grant <strong>Contents: Read and write</strong> on the target repo only.</li>
-            <li>Update the secret values in Lovable Cloud → Backend → Secrets.</li>
+            <li>Open GitHub → Settings → Developer settings → <strong>Fine-grained personal access tokens</strong>.</li>
+            <li>Repository access → <strong>Only select repositories</strong> → pick your portfolio repo.</li>
+            <li>Permissions → Repository → set <strong>Contents: Read and write</strong>.</li>
+            <li>Generate, copy the token (starts with <code className="font-mono text-xs">github_pat_</code>) and paste above.</li>
           </ol>
           <a
             href="https://github.com/settings/personal-access-tokens"
