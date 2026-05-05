@@ -1,12 +1,7 @@
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-};
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { corsHeaders } from "https://esm.sh/@supabase/supabase-js@2.45.0/cors";
 
 const GH_API = "https://api.github.com";
-
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 function sanitizeOwner(v: string) {
   // Accept either "owner" or a URL like https://github.com/owner/repo
