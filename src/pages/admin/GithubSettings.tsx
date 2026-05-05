@@ -5,7 +5,17 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, CheckCircle2, XCircle, Github, ExternalLink, Save, Eye, EyeOff } from "lucide-react";
+import { Loader2, CheckCircle2, XCircle, Github, ExternalLink, Save, Eye, EyeOff, Upload, Trash2, Copy, RefreshCw, Image as ImageIcon } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+const CATEGORIES = [
+  { value: "profile", label: "Profile" },
+  { value: "hero", label: "Hero/Banner" },
+  { value: "research", label: "Research" },
+  { value: "blog", label: "Blog" },
+  { value: "general", label: "General" },
+];
 
 export default function GithubSettings() {
   const [checking, setChecking] = useState(false);
@@ -15,6 +25,74 @@ export default function GithubSettings() {
   const [showPat, setShowPat] = useState(false);
   const [form, setForm] = useState({ owner: "", repo: "", branch: "main", pat: "" });
   const [hasPat, setHasPat] = useState(false);
+
+  // Repo media state
+  const baseUrl = (import.meta.env.BASE_URL || "/").replace(/\/$/, "");
+  const repoBase = `${baseUrl}/uploads`;
+  const [ghFile, setGhFile] = useState<File | null>(null);
+  const [ghName, setGhName] = useState("");
+  const [ghAlt, setGhAlt] = useState("");
+  const [ghCategory, setGhCategory] = useState("general");
+  const [ghUploading, setGhUploading] = useState(false);
+  const [repoImages, setRepoImages] = useState<Array<{ name: string; file: string; alt?: string; category?: string }>>([]);
+  const [repoLoading, setRepoLoading] = useState(false);
+  const [repoError, setRepoError] = useState<string | null>(null);
+  const [deletingFile, setDeletingFile] = useState<string | null>(null);
+
+  const loadRepo = () => {
+    setRepoLoading(true);
+    setRepoError(null);
+    fetch(`${repoBase}/manifest.json?t=${Date.now()}`, { cache: "no-store" })
+      .then((r) => { if (!r.ok) throw new Error(`Manifest not found (${r.status})`); return r.json(); })
+      .then((data) => setRepoImages(Array.isArray(data?.images) ? data.images : []))
+      .catch((err) => setRepoError(err.message))
+      .finally(() => setRepoLoading(false));
+  };
+
+  useEffect(() => { loadRepo(); }, []);
+
+  const fileToBase64 = (f: File): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve((reader.result as string).split(",")[1] || "");
+      reader.onerror = reject;
+      reader.readAsDataURL(f);
+    });
+
+  const handleGithubUpload = async () => {
+    if (!ghFile) return;
+    setGhUploading(true);
+    try {
+      const safeName = (ghFile.name || "image").replace(/[^a-zA-Z0-9._-]/g, "_");
+      const contentBase64 = await fileToBase64(ghFile);
+      const { data, error } = await supabase.functions.invoke("github-upload", {
+        body: { filename: safeName, contentBase64, name: ghName || safeName, alt: ghAlt || ghName || safeName, category: ghCategory },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast.success(`Pushed ${data.file} to GitHub`);
+      setGhFile(null); setGhName(""); setGhAlt("");
+      setTimeout(loadRepo, 1500);
+    } catch (err: any) {
+      toast.error(err.message || "GitHub upload failed");
+    } finally { setGhUploading(false); }
+  };
+
+  const handleGithubDelete = async (filename: string) => {
+    if (!confirm(`Delete "${filename}" from the GitHub repo?`)) return;
+    setDeletingFile(filename);
+    try {
+      const { data, error } = await supabase.functions.invoke("github-upload", { body: { action: "delete", filename } });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast.success(`Deleted ${filename}`);
+      setTimeout(loadRepo, 1500);
+    } catch (err: any) {
+      toast.error(err.message || "Delete failed");
+    } finally { setDeletingFile(null); }
+  };
+
+  const copyUrl = (url: string) => { navigator.clipboard.writeText(url); toast.success("URL copied"); };
 
   useEffect(() => {
     const load = async () => {
@@ -205,6 +283,90 @@ export default function GithubSettings() {
           >
             Open GitHub PAT settings <ExternalLink className="h-3 w-3" />
           </a>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2"><Upload className="h-4 w-4" /> Push Media to GitHub</CardTitle>
+          <CardDescription>Uploads to <code className="font-mono text-xs">public/uploads/</code> and updates <code className="font-mono text-xs">manifest.json</code>.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label className="text-xs">Display name</Label>
+              <Input value={ghName} onChange={(e) => setGhName(e.target.value)} placeholder="Optional friendly name" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Category</Label>
+              <Select value={ghCategory} onValueChange={setGhCategory}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {CATEGORIES.map((c) => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs">Alt text</Label>
+            <Input value={ghAlt} onChange={(e) => setGhAlt(e.target.value)} placeholder="Descriptive alt text" />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs">File</Label>
+            <Input type="file" accept="image/*" onChange={(e) => setGhFile(e.target.files?.[0] || null)} />
+          </div>
+          <Button onClick={handleGithubUpload} disabled={ghUploading || !ghFile}>
+            {ghUploading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Upload className="h-4 w-4 mr-2" />}
+            Push to GitHub
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0">
+          <div>
+            <CardTitle className="text-base flex items-center gap-2"><ImageIcon className="h-4 w-4" /> Repo Media Library</CardTitle>
+            <CardDescription>Live from <code className="font-mono text-xs">public/uploads/manifest.json</code>.</CardDescription>
+          </div>
+          <Button variant="outline" size="sm" onClick={loadRepo} disabled={repoLoading}>
+            <RefreshCw className={`h-3.5 w-3.5 mr-1 ${repoLoading ? "animate-spin" : ""}`} /> Refresh
+          </Button>
+        </CardHeader>
+        <CardContent>
+          {repoLoading ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {[1, 2, 3].map((i) => <Skeleton key={i} className="aspect-square rounded-xl" />)}
+            </div>
+          ) : repoError ? (
+            <div className="text-sm text-destructive">{repoError}</div>
+          ) : repoImages.length === 0 ? (
+            <div className="text-sm text-muted-foreground text-center py-6">No images in the repo yet. Push one above.</div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {repoImages.map((img) => {
+                const url = `${repoBase}/${img.file}`;
+                return (
+                  <div key={img.file} className="relative group rounded-xl overflow-hidden border border-border bg-muted">
+                    <div className="aspect-square">
+                      <img src={url} alt={img.alt || img.name} className="w-full h-full object-cover" />
+                    </div>
+                    <div className="p-2">
+                      <p className="text-xs font-medium truncate">{img.name}</p>
+                      <p className="text-[10px] text-muted-foreground capitalize">{img.category || "general"}</p>
+                    </div>
+                    <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Button size="icon" variant="secondary" className="h-7 w-7" onClick={() => copyUrl(url)} title="Copy URL">
+                        <Copy className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button size="icon" variant="destructive" className="h-7 w-7" onClick={() => handleGithubDelete(img.file)} disabled={deletingFile === img.file} title="Delete">
+                        {deletingFile === img.file ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
