@@ -217,6 +217,36 @@ export type Database = {
         }
         Relationships: []
       }
+      github_settings: {
+        Row: {
+          branch: string
+          id: string
+          owner: string
+          pat: string
+          repo: string
+          updated_at: string
+          uploads_path: string
+        }
+        Insert: {
+          branch?: string
+          id?: string
+          owner?: string
+          pat?: string
+          repo?: string
+          updated_at?: string
+          uploads_path?: string
+        }
+        Update: {
+          branch?: string
+          id?: string
+          owner?: string
+          pat?: string
+          repo?: string
+          updated_at?: string
+          uploads_path?: string
+        }
+        Relationships: []
+      }
       page_views: {
         Row: {
           blog_post_id: string | null
