@@ -40,7 +40,9 @@ interface SaveConfigBody { action: "save-config"; owner: string; repo: string; b
 interface ConfigBody { action: "config" }
 interface DeleteBody { action: "delete"; filename: string }
 
-type Body = UploadBody | GetConfigBody | SaveConfigBody | ConfigBody | DeleteBody;
+interface ListBody { action: "list" }
+
+type Body = UploadBody | GetConfigBody | SaveConfigBody | ConfigBody | DeleteBody | ListBody;
 
 async function ghFetch(path: string, token: string, init: RequestInit = {}) {
   const res = await fetch(`${GH_API}${path}`, {
@@ -228,7 +230,29 @@ Deno.serve(async (req) => {
         const newContent = btoa(JSON.stringify(manifest, null, 2) + "\n");
         await putFile(manifestPath, newContent, `chore(uploads): remove ${filename} from manifest`, manifestFile.sha);
       }
-      return new Response(JSON.stringify({ ok: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      return new Response(JSON.stringify({ ok: true, deleted: Boolean(existing) }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    // LIST repo media (manifest + raw URLs straight from GitHub)
+    if ("action" in body && body.action === "list") {
+      const manifestPath = "public/uploads/manifest.json";
+      const manifestFile = await getFile(manifestPath);
+      let images: any[] = [];
+      if (manifestFile) {
+        try {
+          const parsed = JSON.parse(manifestFile.content);
+          images = Array.isArray(parsed?.images) ? parsed.images : [];
+        } catch { /* ignore */ }
+      }
+      const rawBase = `https://raw.githubusercontent.com/${OWNER}/${REPO}/${BRANCH}/public/uploads`;
+      const enriched = images.map((i: any) => ({
+        ...i,
+        url: `${rawBase}/${i.file}`,
+      }));
+      return new Response(
+        JSON.stringify({ ok: true, images: enriched, rawBase }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     // UPLOAD
