@@ -1,6 +1,7 @@
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
 };
 
 const GH_API = "https://api.github.com";
@@ -17,21 +18,13 @@ function sanitizeRepo(v: string) {
   return (m ? m[1] : v).trim().replace(/\.git$/i, "").replace(/^\/+|\/+$/g, "");
 }
 
-async function loadConfig() {
-  // Prefer DB-stored settings; fall back to env secrets
-  const SUPA_URL = Deno.env.get("SUPABASE_URL");
-  const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-  let dbRow: any = null;
-  if (SUPA_URL && SERVICE_KEY) {
-    const admin = createClient(SUPA_URL, SERVICE_KEY);
-    const { data } = await admin.from("github_settings").select("*").limit(1).maybeSingle();
-    dbRow = data;
-  }
-  const owner = sanitizeOwner(dbRow?.owner || Deno.env.get("GITHUB_OWNER") || "");
-  const repo = sanitizeRepo(dbRow?.repo || Deno.env.get("GITHUB_REPO") || "");
-  const branch = (dbRow?.branch || Deno.env.get("GITHUB_BRANCH") || "main").trim();
-  const pat = (dbRow?.pat || Deno.env.get("GITHUB_PAT") || "").trim();
-  return { owner, repo, branch, pat };
+async function loadConfig(admin: ReturnType<typeof createClient>) {
+  const { data } = await admin.from("github_settings").select("*").limit(1).maybeSingle();
+  const owner = sanitizeOwner(data?.owner || Deno.env.get("GITHUB_OWNER") || "");
+  const repo = sanitizeRepo(data?.repo || Deno.env.get("GITHUB_REPO") || "");
+  const branch = (data?.branch || Deno.env.get("GITHUB_BRANCH") || "main").trim();
+  const pat = (data?.pat || Deno.env.get("GITHUB_PAT") || "").trim();
+  return { row: data, owner, repo, branch, pat };
 }
 
 interface UploadBody {
@@ -42,10 +35,12 @@ interface UploadBody {
   category?: string;
 }
 
+interface GetConfigBody { action: "get-config" }
+interface SaveConfigBody { action: "save-config"; owner: string; repo: string; branch?: string; pat?: string }
 interface ConfigBody { action: "config" }
 interface DeleteBody { action: "delete"; filename: string }
 
-type Body = UploadBody | ConfigBody | DeleteBody;
+type Body = UploadBody | GetConfigBody | SaveConfigBody | ConfigBody | DeleteBody;
 
 async function ghFetch(path: string, token: string, init: RequestInit = {}) {
   const res = await fetch(`${GH_API}${path}`, {
@@ -64,17 +59,103 @@ async function ghFetch(path: string, token: string, init: RequestInit = {}) {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
-  const { pat: PAT, owner: OWNER, repo: REPO, branch: BRANCH } = await loadConfig();
-
-  if (!PAT || !OWNER || !REPO) {
-    return new Response(
-      JSON.stringify({ error: "GitHub settings missing. Set owner, repo and PAT in Admin → GitHub." }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
-  }
-
   try {
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const token = authHeader.replace("Bearer ", "");
+
+    const callerClient = createClient(supabaseUrl, anonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
+    const { data: claimsData, error: claimsError } = await callerClient.auth.getClaims(token);
+    const callerId = claimsData?.claims?.sub;
+    if (claimsError || !callerId) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const admin = createClient(supabaseUrl, serviceKey);
+    const { data: callerRole, error: callerRoleError } = await admin
+      .from("user_roles")
+      .select("id")
+      .eq("user_id", callerId)
+      .eq("role", "admin")
+      .maybeSingle();
+
+    if (callerRoleError) throw callerRoleError;
+    if (!callerRole) {
+      return new Response(JSON.stringify({ error: "Only admins can manage GitHub settings" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const body = (await req.json()) as Body;
+    const { row, pat: PAT, owner: OWNER, repo: REPO, branch: BRANCH } = await loadConfig(admin);
+
+    if ("action" in body && body.action === "get-config") {
+      return new Response(JSON.stringify({
+        ok: true,
+        owner: OWNER,
+        repo: REPO,
+        branch: BRANCH,
+        hasPat: Boolean(PAT),
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if ("action" in body && body.action === "save-config") {
+      const owner = sanitizeOwner(body.owner || "");
+      const repo = sanitizeRepo(body.repo || "");
+      const branch = (body.branch || "main").trim() || "main";
+      const pat = (body.pat || "").trim();
+
+      if (!owner || !repo) {
+        return new Response(JSON.stringify({ error: "Owner and repository are required" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const payload = {
+        owner,
+        repo,
+        branch,
+        pat: pat || row?.pat || Deno.env.get("GITHUB_PAT") || "",
+        updated_at: new Date().toISOString(),
+      };
+
+      if (row?.id) {
+        const { error } = await admin.from("github_settings").update(payload).eq("id", row.id);
+        if (error) throw error;
+      } else {
+        const { error } = await admin.from("github_settings").insert(payload);
+        if (error) throw error;
+      }
+
+      return new Response(JSON.stringify({ ok: true, owner, repo, branch, hasPat: Boolean(payload.pat) }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (!PAT || !OWNER || !REPO) {
+      return new Response(
+        JSON.stringify({ error: "GitHub settings missing. Set owner, repo and PAT in Admin → GitHub." }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     // Config check
     if ("action" in body && body.action === "config") {

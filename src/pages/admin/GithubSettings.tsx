@@ -6,56 +6,68 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2, CheckCircle2, XCircle, Github, ExternalLink, Save, Eye, EyeOff } from "lucide-react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 export default function GithubSettings() {
-  const qc = useQueryClient();
   const [checking, setChecking] = useState(false);
-  const [status, setStatus] = useState<{ ok: boolean; owner?: string; repo?: string; branch?: string; repoInfo?: any; error?: string } | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [status, setStatus] = useState<{ ok: boolean; owner?: string; repo?: string; branch?: string; repoInfo?: { full_name?: string; private?: boolean } | null; error?: string | null } | null>(null);
   const [showPat, setShowPat] = useState(false);
   const [form, setForm] = useState({ owner: "", repo: "", branch: "main", pat: "" });
-
-  const { data: settings, isLoading } = useQuery({
-    queryKey: ["github-settings"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("github_settings").select("*").limit(1).maybeSingle();
-      if (error) throw error;
-      return data;
-    },
-  });
+  const [hasPat, setHasPat] = useState(false);
 
   useEffect(() => {
-    if (settings) {
-      setForm({
-        owner: settings.owner || "",
-        repo: settings.repo || "",
-        branch: settings.branch || "main",
-        pat: settings.pat || "",
-      });
-    }
-  }, [settings]);
+    const load = async () => {
+      setLoading(true);
+      try {
+        const { data, error } = await supabase.functions.invoke("github-upload", {
+          body: { action: "get-config" },
+        });
+        if (error) throw error;
+        if (data?.error) throw new Error(data.error);
 
-  const save = useMutation({
-    mutationFn: async () => {
-      // Strip URLs to bare names
-      const owner = (form.owner.match(/github\.com\/([^/]+)/i)?.[1] || form.owner).replace(/^\/+|\/+$/g, "").trim();
-      const repo = (form.repo.match(/github\.com\/[^/]+\/([^/?#]+)/i)?.[1] || form.repo).replace(/\.git$/i, "").replace(/^\/+|\/+$/g, "").trim();
-      const payload = { owner, repo, branch: form.branch.trim() || "main", pat: form.pat.trim(), updated_at: new Date().toISOString() };
-      if (settings?.id) {
-        const { error } = await supabase.from("github_settings").update(payload).eq("id", settings.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from("github_settings").insert(payload);
-        if (error) throw error;
+        setForm({
+          owner: data?.owner || "",
+          repo: data?.repo || "",
+          branch: data?.branch || "main",
+          pat: "",
+        });
+        setHasPat(Boolean(data?.hasPat));
+      } catch (err: any) {
+        toast.error(err.message || "Failed to load GitHub settings");
+      } finally {
+        setLoading(false);
       }
-    },
-    onSuccess: () => {
-      toast.success("GitHub settings saved");
-      qc.invalidateQueries({ queryKey: ["github-settings"] });
+    };
+
+    load();
+  }, []);
+
+  const saveSettings = async () => {
+    setSaving(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("github-upload", {
+        body: {
+          action: "save-config",
+          owner: form.owner,
+          repo: form.repo,
+          branch: form.branch,
+          pat: form.pat,
+        },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      setForm((prev) => ({ ...prev, pat: "" }));
+      setHasPat(Boolean(data?.hasPat));
       setStatus(null);
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
+      toast.success("GitHub settings saved");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to save GitHub settings");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const checkConfig = async () => {
     setChecking(true);
@@ -85,10 +97,10 @@ export default function GithubSettings() {
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Credentials</CardTitle>
-          <CardDescription>Edit GitHub PAT and repo info here. Saved to your secure backend.</CardDescription>
+          <CardDescription>Edit GitHub PAT and repo info here. Saved through your secure backend function.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {isLoading ? (
+          {loading ? (
             <p className="text-sm text-muted-foreground">Loading…</p>
           ) : (
             <>
@@ -124,7 +136,7 @@ export default function GithubSettings() {
                   <div className="relative">
                     <Input
                       type={showPat ? "text" : "password"}
-                      placeholder="github_pat_..."
+                      placeholder={hasPat ? "Saved token exists — paste a new token only to replace it" : "github_pat_..."}
                       value={form.pat}
                       onChange={(e) => setForm((p) => ({ ...p, pat: e.target.value }))}
                     />
@@ -136,12 +148,15 @@ export default function GithubSettings() {
                       {showPat ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                   </div>
+                  <p className="text-[10px] text-muted-foreground">
+                    {hasPat ? "A token is already saved securely. Leave this blank to keep it." : "Paste a fine-grained token with Contents read/write permission."}
+                  </p>
                 </div>
               </div>
 
               <div className="flex flex-wrap gap-2">
-                <Button onClick={() => save.mutate()} disabled={save.isPending}>
-                  {save.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
+                <Button onClick={saveSettings} disabled={saving}>
+                  {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
                   Save Settings
                 </Button>
                 <Button variant="outline" onClick={checkConfig} disabled={checking}>
@@ -165,7 +180,7 @@ export default function GithubSettings() {
                   <div>Visibility: {status.repoInfo?.private ? "Private" : "Public"}</div>
                 </div>
               )}
-              {!status.ok && <div className="mt-1 text-xs text-destructive break-all">{status.error}</div>}
+              {!status.ok && <div className="mt-1 text-xs text-destructive break-all">{status.error?.includes("Bad credentials") ? "GitHub token is invalid or expired. Generate a new fine-grained PAT with Contents read/write access, save it, then test again." : status.error}</div>}
             </div>
           )}
         </CardContent>

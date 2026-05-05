@@ -1,16 +1,21 @@
 import { forwardRef } from "react";
 import { FlaskConical, Mail, ExternalLink } from "lucide-react";
 import { Link } from "react-router-dom";
-
-const socialLinks = [
-  { label: "Google Scholar", href: "https://scholar.google.com/" },
-  { label: "ResearchGate", href: "https://www.researchgate.net/" },
-  { label: "ORCID", href: "https://orcid.org/" },
-  { label: "LinkedIn", href: "https://www.linkedin.com/" },
-];
+import { useContentValue } from "@/hooks/useSiteContent";
 
 export const Footer = forwardRef<HTMLElement>(function Footer(_, ref) {
   const currentYear = new Date().getFullYear();
+  const { value: googleScholar } = useContentValue("footer", "google_scholar_url", "https://scholar.google.com/");
+  const { value: researchGate } = useContentValue("footer", "researchgate_url", "https://www.researchgate.net/");
+  const { value: orcid } = useContentValue("footer", "orcid_url", "https://orcid.org/");
+  const { value: linkedIn } = useContentValue("footer", "linkedin_url", "https://www.linkedin.com/");
+
+  const socialLinks = [
+    { label: "Google Scholar", href: googleScholar },
+    { label: "ResearchGate", href: researchGate },
+    { label: "ORCID", href: orcid },
+    { label: "LinkedIn", href: linkedIn },
+  ].filter((link) => Boolean(link.href?.trim()));
 
   return (
     <footer ref={ref} className="border-t py-10">
