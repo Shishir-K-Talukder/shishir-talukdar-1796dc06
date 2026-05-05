@@ -3,6 +3,7 @@ import { ArrowRight, BookOpen, Users, FlaskConical, Microscope, Bug, Leaf, Gradu
 import { Button } from "@/components/ui/button";
 import { BentoCard } from "@/components/BentoCard";
 import { CountUp } from "@/components/CountUp";
+import { FloatingMicrobes } from "@/components/FloatingMicrobes";
 import { useProfile } from "@/hooks/useProfile";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -66,6 +67,10 @@ export default function Index() {
           <div className="relative z-10 flex flex-col items-center gap-6 sm:flex-row sm:items-center sm:gap-8">
             {/* Profile photo — large, highlighted */}
             <div className="group relative shrink-0 order-1 sm:order-2">
+              {/* Floating microorganisms around the photo */}
+              <div className="pointer-events-none absolute -inset-10 sm:-inset-12 lg:-inset-16 -z-10">
+                <FloatingMicrobes count={9} />
+              </div>
               {/* Glow halo */}
               <div
                 aria-hidden
@@ -77,7 +82,7 @@ export default function Index() {
                   <img
                     src={profileImg}
                     alt={`${profile.name} — ${profile.title}`}
-                    className="h-40 w-40 sm:h-48 sm:w-48 lg:h-60 lg:w-60 xl:h-64 xl:w-64 rounded-full object-cover object-center"
+                    className="h-44 w-44 sm:h-56 sm:w-56 lg:h-72 lg:w-72 xl:h-80 xl:w-80 rounded-full object-cover object-center"
                     width={512}
                     height={512}
                     loading="eager"
