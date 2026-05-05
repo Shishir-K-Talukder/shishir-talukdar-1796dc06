@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ArrowRight, BookOpen, Users, FlaskConical, Microscope, Bug, Leaf, GraduationCap, Award } from "lucide-react";
+import { ArrowRight, BookOpen, Users, FlaskConical, Microscope, Bug, Leaf, GraduationCap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { BentoCard } from "@/components/BentoCard";
 import { CountUp } from "@/components/CountUp";
