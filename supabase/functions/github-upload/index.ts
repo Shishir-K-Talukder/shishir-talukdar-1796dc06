@@ -161,10 +161,19 @@ Deno.serve(async (req) => {
     if ("action" in body && body.action === "config") {
       const r = await ghFetch(`/repos/${OWNER}/${REPO}`, PAT);
       const ok = r.ok;
-      const data = ok ? await r.json() : await r.text();
+      let errMsg: string | null = null;
+      let info: any = null;
+      if (ok) {
+        info = await r.json();
+      } else {
+        const txt = await r.text();
+        try { const j = JSON.parse(txt); errMsg = `${r.status} ${j.message || txt}`; }
+        catch { errMsg = `${r.status} ${txt}`; }
+      }
+      // Always return 200 so the client sees the real GitHub error message
       return new Response(
-        JSON.stringify({ ok, owner: OWNER, repo: REPO, branch: BRANCH, repoInfo: ok ? { full_name: (data as any).full_name, private: (data as any).private } : null, error: ok ? null : data }),
-        { status: ok ? 200 : 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ ok, owner: OWNER, repo: REPO, branch: BRANCH, repoInfo: ok ? { full_name: info.full_name, private: info.private } : null, error: errMsg }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
