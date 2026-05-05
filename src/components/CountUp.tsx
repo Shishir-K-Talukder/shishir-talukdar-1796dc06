@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { motion, useInView, useMotionValue, useSpring, useTransform } from "framer-motion";
+import { cn } from "@/lib/utils";
 
 interface CountUpProps {
   to: number;
@@ -8,44 +8,80 @@ interface CountUpProps {
   className?: string;
 }
 
-/**
- * Animated number counter. Springs from 0 to `to` when scrolled into view.
- * Re-animates when `to` changes (e.g. when admin adds new records).
- */
-export function CountUp({ to, suffix = "+", duration = 1.4, className }: CountUpProps) {
+/** Animated number counter. Eases from 0 to `to` when scrolled into view. */
+export function CountUp({ to, suffix = "+", duration = 1500, className }: CountUpProps) {
   const ref = useRef<HTMLSpanElement>(null);
-  const inView = useInView(ref, { once: false, margin: "-20% 0px" });
-  const motionValue = useMotionValue(0);
-  const spring = useSpring(motionValue, {
-    duration: duration * 1000,
-    bounce: 0.15,
-  });
-  const display = useTransform(spring, (v) => Math.round(v).toString());
-  const [text, setText] = useState("0");
+  const [value, setValue] = useState(0);
+  const [pulse, setPulse] = useState(false);
+  const startedRef = useRef(false);
 
   useEffect(() => {
-    const unsub = display.on("change", setText);
-    return () => unsub();
-  }, [display]);
+    const node = ref.current;
+    if (!node) return;
 
+    const animate = () => {
+      const start = performance.now();
+      const from = 0;
+      const ease = (t: number) => 1 - Math.pow(1 - t, 3); // easeOutCubic
+      let raf = 0;
+      const tick = (now: number) => {
+        const t = Math.min(1, (now - start) / duration);
+        setValue(Math.round(from + (to - from) * ease(t)));
+        if (t < 1) raf = requestAnimationFrame(tick);
+      };
+      raf = requestAnimationFrame(tick);
+      return () => cancelAnimationFrame(raf);
+    };
+
+    const obs = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting && !startedRef.current) {
+            startedRef.current = true;
+            animate();
+          }
+        });
+      },
+      { threshold: 0.3 },
+    );
+    obs.observe(node);
+    return () => obs.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Re-pulse + recount when `to` changes after first reveal
   useEffect(() => {
-    if (inView) {
-      motionValue.set(0);
-      const t = setTimeout(() => motionValue.set(to), 50);
-      return () => clearTimeout(t);
-    }
-  }, [inView, to, motionValue]);
+    if (!startedRef.current) return;
+    const start = performance.now();
+    const from = value;
+    const ease = (t: number) => 1 - Math.pow(1 - t, 3);
+    let raf = 0;
+    const tick = (now: number) => {
+      const t = Math.min(1, (now - start) / duration);
+      setValue(Math.round(from + (to - from) * ease(t)));
+      if (t < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    setPulse(true);
+    const p = setTimeout(() => setPulse(false), 600);
+    return () => {
+      cancelAnimationFrame(raf);
+      clearTimeout(p);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [to]);
 
   return (
-    <motion.span
+    <span
       ref={ref}
-      className={className}
-      initial={{ opacity: 0, y: 8 }}
-      animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 8 }}
-      transition={{ duration: 0.4 }}
+      className={cn(
+        "inline-block tabular-nums transition-transform duration-300",
+        pulse && "scale-110 text-primary drop-shadow-[0_0_12px_hsl(var(--primary)/0.6)]",
+        className,
+      )}
     >
-      {text}
+      {value}
       {suffix}
-    </motion.span>
+    </span>
   );
 }
