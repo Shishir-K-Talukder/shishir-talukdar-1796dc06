@@ -76,9 +76,9 @@ Deno.serve(async (req) => {
     const callerClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
     });
-    const { data: claimsData, error: claimsError } = await callerClient.auth.getClaims(token);
-    const callerId = claimsData?.claims?.sub;
-    if (claimsError || !callerId) {
+    const { data: userData, error: userError } = await callerClient.auth.getUser(token);
+    const callerId = userData?.user?.id;
+    if (userError || !callerId) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
