@@ -30,29 +30,31 @@ export default function ImageManager() {
   const [filterCategory, setFilterCategory] = useState("all");
 
   // GitHub repo media state
-  const baseUrl = (import.meta.env.BASE_URL || "/").replace(/\/$/, "");
-  const repoBase = `${baseUrl}/uploads`;
   const [ghFile, setGhFile] = useState<File | null>(null);
   const [ghName, setGhName] = useState("");
   const [ghAlt, setGhAlt] = useState("");
   const [ghCategory, setGhCategory] = useState("general");
   const [ghUploading, setGhUploading] = useState(false);
-  const [repoImages, setRepoImages] = useState<Array<{ name: string; file: string; alt?: string; category?: string }>>([]);
+  const [repoImages, setRepoImages] = useState<Array<{ name: string; file: string; alt?: string; category?: string; url: string }>>([]);
   const [repoLoading, setRepoLoading] = useState(false);
   const [repoError, setRepoError] = useState<string | null>(null);
   const [deletingFile, setDeletingFile] = useState<string | null>(null);
 
-  const loadRepo = () => {
+  const loadRepo = async () => {
     setRepoLoading(true);
     setRepoError(null);
-    fetch(`${repoBase}/manifest.json?t=${Date.now()}`, { cache: "no-store" })
-      .then((r) => {
-        if (!r.ok) throw new Error(`Manifest not found (${r.status})`);
-        return r.json();
-      })
-      .then((data) => setRepoImages(Array.isArray(data?.images) ? data.images : []))
-      .catch((err) => setRepoError(err.message))
-      .finally(() => setRepoLoading(false));
+    try {
+      const { data, error } = await supabase.functions.invoke("github-upload", {
+        body: { action: "list" },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      setRepoImages(Array.isArray(data?.images) ? data.images : []);
+    } catch (err: any) {
+      setRepoError(err.message);
+    } finally {
+      setRepoLoading(false);
+    }
   };
 
   useEffect(() => { loadRepo(); }, []);
@@ -307,7 +309,7 @@ export default function ImageManager() {
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {repoImages.map((img) => {
-                const url = `${repoBase}/${img.file}`;
+                const url = img.url;
                 return (
                   <Card key={img.file} className="overflow-hidden group relative">
                     <div className="aspect-square bg-muted">
