@@ -59,38 +59,52 @@ export default function Index() {
         <BentoCard className="md:col-span-2 lg:col-span-2 lg:row-span-2 flex min-h-[28rem] flex-col justify-between gap-6 relative overflow-hidden" delay={0}>
           {/* Background lab image */}
           <div className="absolute inset-0 z-0">
-            <img src={labHeroImg} alt="" className="h-full w-full object-cover opacity-15" width={800} height={800} />
+            <img src={labHeroImg} alt="" className="h-full w-full object-cover opacity-10" width={800} height={800} />
             <div className="absolute inset-0 bg-gradient-to-t from-card via-card/90 to-card/60" />
           </div>
 
-          <div className="relative z-10">
-            <p className="text-sm font-mono font-medium text-primary mb-3">{profile.name}</p>
-            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold font-heading leading-tight mb-4">
-              Advancing the Future of{" "}
-              <span className="text-gradient">Microbial Science</span>
-            </h1>
-            <p className="text-muted-foreground leading-relaxed max-w-lg">
-              Pioneering research and innovative solutions in microbial science for a healthier tomorrow.
-            </p>
-          </div>
+          <div className="relative z-10 flex flex-col items-center gap-6 sm:flex-row sm:items-center sm:gap-8">
+            {/* Profile photo — large, highlighted */}
+            <div className="group relative shrink-0 order-1 sm:order-2">
+              {/* Glow halo */}
+              <div
+                aria-hidden
+                className="absolute inset-0 -z-10 rounded-full bg-primary/40 blur-3xl opacity-70 group-hover:opacity-100 transition-opacity duration-500"
+              />
+              {/* Gradient ring frame */}
+              <div className="rounded-full bg-gradient-to-br from-primary via-accent to-primary p-[3px] shadow-[0_10px_40px_-10px_hsl(var(--primary)/0.55)] transition-transform duration-500 group-hover:scale-105">
+                <div className="rounded-full bg-card p-1">
+                  <img
+                    src={profileImg}
+                    alt={`${profile.name} — ${profile.title}`}
+                    className="h-40 w-40 sm:h-48 sm:w-48 lg:h-60 lg:w-60 xl:h-64 xl:w-64 rounded-full object-cover object-center"
+                    width={512}
+                    height={512}
+                    loading="eager"
+                    {...({ fetchpriority: "high" } as any)}
+                  />
+                </div>
+              </div>
+            </div>
 
-          {/* Profile photo */}
-          <div className="relative z-10 flex flex-wrap items-center gap-4 sm:flex-nowrap">
-            <img
-              src={profileImg}
-              alt={`${profile.name} — ${profile.title}`}
-              className="h-16 w-16 rounded-full object-cover border-2 border-primary/40"
-              width={512}
-              height={512}
-              loading="eager"
-            />
-            <div>
-              <p className="font-semibold">{profile.title}</p>
-              <p className="text-sm text-muted-foreground">{profile.subtitle}</p>
+            {/* Text */}
+            <div className="order-2 sm:order-1 text-center sm:text-left">
+              <p className="text-sm font-mono font-medium text-primary mb-3">{profile.name}</p>
+              <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold font-heading leading-tight mb-4">
+                Advancing the Future of{" "}
+                <span className="text-gradient">Microbial Science</span>
+              </h1>
+              <p className="text-muted-foreground leading-relaxed max-w-lg mx-auto sm:mx-0">
+                Pioneering research and innovative solutions in microbial science for a healthier tomorrow.
+              </p>
+              <div className="mt-4">
+                <p className="font-semibold">{profile.title}</p>
+                <p className="text-sm text-muted-foreground">{profile.subtitle}</p>
+              </div>
             </div>
           </div>
 
-          <div className="relative z-10 flex flex-wrap gap-3">
+          <div className="relative z-10 flex flex-wrap justify-center sm:justify-start gap-3">
             <Button asChild>
               <Link to="/contact">Request Collaboration</Link>
             </Button>
