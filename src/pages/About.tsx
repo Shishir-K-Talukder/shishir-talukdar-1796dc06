@@ -1,6 +1,7 @@
 import { BentoCard } from "@/components/BentoCard";
 import { GraduationCap, Bug, Microscope, Leaf, Heart, Globe, BookOpen } from "lucide-react";
 import { useProfile } from "@/hooks/useProfile";
+import { FloatingMicrobes } from "@/components/FloatingMicrobes";
 import profileFallback from "@/assets/profile-placeholder.jpg";
 import labHeroImg from "@/assets/lab-hero.jpg";
 
@@ -24,16 +25,28 @@ export default function About() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {/* Bio — spans 2 cols */}
         <BentoCard className="md:col-span-2 flex flex-col gap-6" delay={0}>
-          <div className="flex items-center gap-4">
-            <img
-              src={profileImg}
-              alt={profile.name}
-              className="h-20 w-20 rounded-full object-cover border-2 border-primary/40"
-              width={512}
-              height={512}
-            />
-            <div>
-              <h1 className="text-2xl md:text-3xl font-bold font-heading">{profile.name}</h1>
+          <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-center sm:gap-8">
+            <div className="group relative shrink-0">
+              <div className="pointer-events-none absolute -inset-8 sm:-inset-10 lg:-inset-12 -z-10">
+                <FloatingMicrobes count={8} />
+              </div>
+              <div aria-hidden className="absolute inset-0 -z-10 rounded-full bg-primary/40 blur-3xl opacity-70 group-hover:opacity-100 transition-opacity duration-500" />
+              <div className="rounded-full bg-gradient-to-br from-primary via-accent to-primary p-[3px] shadow-[0_10px_40px_-10px_hsl(var(--primary)/0.55)] transition-transform duration-500 group-hover:scale-105">
+                <div className="rounded-full bg-card p-1">
+                  <img
+                    src={profileImg}
+                    alt={profile.name}
+                    className="h-40 w-40 sm:h-52 sm:w-52 lg:h-64 lg:w-64 xl:h-72 xl:w-72 rounded-full object-cover object-center"
+                    width={512}
+                    height={512}
+                    loading="eager"
+                    {...({ fetchpriority: "high" } as any)}
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="text-center sm:text-left">
+              <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold font-heading">{profile.name}</h1>
               <p className="text-muted-foreground">{profile.title}</p>
             </div>
           </div>
