@@ -63,7 +63,7 @@ Deno.serve(async (req) => {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
+        status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -80,7 +80,7 @@ Deno.serve(async (req) => {
     const callerId = claimsData?.claims?.sub;
     if (claimsError || !callerId) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
+        status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -96,7 +96,7 @@ Deno.serve(async (req) => {
     if (callerRoleError) throw callerRoleError;
     if (!callerRole) {
       return new Response(JSON.stringify({ error: "Only admins can manage GitHub settings" }), {
-        status: 403,
+        status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -124,7 +124,15 @@ Deno.serve(async (req) => {
 
       if (!owner || !repo) {
         return new Response(JSON.stringify({ error: "Owner and repository are required" }), {
-          status: 400,
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const existingPat = (row?.pat || Deno.env.get("GITHUB_PAT") || "").trim();
+      if (!pat && !existingPat) {
+        return new Response(JSON.stringify({ error: "Personal Access Token (PAT) is required the first time you save." }), {
+          status: 200,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
@@ -133,7 +141,7 @@ Deno.serve(async (req) => {
         owner,
         repo,
         branch,
-        pat: pat || row?.pat || Deno.env.get("GITHUB_PAT") || "",
+        pat: pat || existingPat,
         updated_at: new Date().toISOString(),
       };
 
@@ -152,8 +160,8 @@ Deno.serve(async (req) => {
 
     if (!PAT || !OWNER || !REPO) {
       return new Response(
-        JSON.stringify({ error: "GitHub settings missing. Set owner, repo and PAT in Admin → GitHub." }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ ok: false, error: "GitHub settings missing. Set owner, repo and PAT in Admin → GitHub, then click Save Settings before testing." }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -226,7 +234,7 @@ Deno.serve(async (req) => {
     // UPLOAD
     const upload = body as UploadBody;
     if (!upload.filename || !upload.contentBase64) {
-      return new Response(JSON.stringify({ error: "filename and contentBase64 required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      return new Response(JSON.stringify({ error: "filename and contentBase64 required" }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
     const safeName = upload.filename.replace(/[^a-zA-Z0-9._-]/g, "_");
     const imgPath = `public/uploads/${safeName}`;
@@ -259,6 +267,6 @@ Deno.serve(async (req) => {
     );
   } catch (err: any) {
     console.error("github-upload error:", err);
-    return new Response(JSON.stringify({ error: err.message || String(err) }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    return new Response(JSON.stringify({ error: err.message || String(err) }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
 });
