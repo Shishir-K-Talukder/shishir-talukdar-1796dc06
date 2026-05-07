@@ -87,9 +87,10 @@ export default function Index() {
                     src={profileImg}
                     alt={`${profile.name} — ${profile.title}`}
                     className="h-44 w-44 sm:h-56 sm:w-56 lg:h-72 lg:w-72 xl:h-80 xl:w-80 rounded-full object-cover object-center"
-                    width={512}
-                    height={512}
+                    width={320}
+                    height={320}
                     loading="eager"
+                    decoding="async"
                     {...({ fetchpriority: "high" } as any)}
                   />
                 </div>
