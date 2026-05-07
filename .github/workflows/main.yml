@@ -21,14 +21,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
         with:
-          node-version: 20
-          cache: npm
+          bun-version: latest
 
       - name: Install dependencies
-        run: npm ci
+        run: bun install --frozen-lockfile
 
       - name: Build
         env:
@@ -36,7 +35,7 @@ jobs:
           VITE_SUPABASE_PROJECT_ID: ppxfvwxhzklwoqboejgr
           VITE_SUPABASE_PUBLISHABLE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBweGZ2d3hoemtsd29xYm9lamdyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYyNjkxMzUsImV4cCI6MjA5MTg0NTEzNX0.QyFgzNQCveBwDb9O-jOIqfJbF9os4wnGQNg0pgGCvlQ
           VITE_SUPABASE_URL: https://ppxfvwxhzklwoqboejgr.supabase.co
-        run: npm run build
+        run: bun run build
 
       - name: SPA fallback (copy index.html to 404.html)
         run: cp dist/index.html dist/404.html
