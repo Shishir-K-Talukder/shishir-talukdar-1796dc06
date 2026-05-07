@@ -153,19 +153,19 @@ export function ImagePicker({ value, onChange, label = "Image", open: openProp, 
       )}
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
+        <DialogContent className="max-w-2xl max-h-[90vh] p-0 flex flex-col gap-0">
+          <DialogHeader className="px-6 pt-6 pb-3 shrink-0 border-b border-border/50">
             <DialogTitle>Select Image</DialogTitle>
           </DialogHeader>
-          <Tabs defaultValue="library">
-            <TabsList className="mb-4">
+          <Tabs defaultValue="library" className="flex flex-col flex-1 min-h-0">
+            <TabsList className="mx-6 mt-3 mb-2 shrink-0 flex-wrap h-auto justify-start">
               <TabsTrigger value="library">Image Library</TabsTrigger>
               <TabsTrigger value="repo">Repo Images</TabsTrigger>
               <TabsTrigger value="github">Push to GitHub</TabsTrigger>
               <TabsTrigger value="upload">Upload New</TabsTrigger>
             </TabsList>
-
-            <TabsContent value="library">
+            <div className="flex-1 min-h-0 overflow-y-auto px-6 pb-6">
+            <TabsContent value="library" className="mt-0">
               {images.length === 0 ? (
                 <p className="text-center text-muted-foreground py-8">No images in library. Upload one first.</p>
               ) : (
