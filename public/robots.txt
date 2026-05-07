@@ -1,8 +1,10 @@
 User-agent: Googlebot
 Allow: /
+Disallow: /SKT-admin
 
 User-agent: Bingbot
 Allow: /
+Disallow: /SKT-admin
 
 User-agent: Twitterbot
 Allow: /
@@ -18,12 +20,11 @@ Allow: /
 
 User-agent: *
 Allow: /
+Disallow: /SKT-admin
 Disallow: /api/
 
-# Crawl-delay for polite bots
 Crawl-delay: 1
 
-# Host
-Host: https://shishir-talukdar.lovable.app
+Host: https://shishirkumartalukder.com
 
-Sitemap: https://shishir-talukdar.lovable.app/sitemap.xml
+Sitemap: https://shishirkumartalukder.com/sitemap.xml

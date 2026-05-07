@@ -139,7 +139,7 @@ const routeSeo: Record<string, SeoConfig> = {
 export function RouteSeo() {
   const location = useLocation();
   const { pathname } = location;
-  const origin = typeof window !== "undefined" ? window.location.origin : "https://shishir-talukdar.lovable.app";
+  const origin = typeof window !== "undefined" ? window.location.origin : "https://shishirkumartalukder.com";
   const basePath = (import.meta.env.BASE_URL || "/").replace(/\/$/, "");
   const siteUrl = `${origin}${basePath}`;
 

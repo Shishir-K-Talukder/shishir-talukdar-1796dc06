@@ -5,8 +5,8 @@ import { componentTagger } from "lovable-tagger";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
-  // Use repo sub-path on GitHub Pages, root everywhere else (Lovable, Vercel, custom domain)
-  base: process.env.GITHUB_PAGES === "true" ? "/shishir-talukdar-1796dc06/" : "/",
+  // Always serve from root — the published site uses a custom domain (shishirkumartalukder.com).
+  base: "/",
   server: {
     host: "::",
     port: 8080,
