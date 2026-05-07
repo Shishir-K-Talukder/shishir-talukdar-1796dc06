@@ -15,6 +15,7 @@ import AnalyticsDashboard from "./AnalyticsDashboard";
 import CategoriesEditor from "./CategoriesEditor";
 import RoleManager from "./RoleManager";
 import SmtpSettings from "./SmtpSettings";
+import AnalyticsSettings from "./AnalyticsSettings";
 import ProfileEditor from "./ProfileEditor";
 import GithubSettings from "./GithubSettings";
 import FooterProfilesEditor from "./FooterProfilesEditor";
@@ -41,6 +42,7 @@ const navItems = [
   { id: "plagiarism", label: "Plagiarism", icon: ShieldAlert },
   { id: "ads", label: "Ads", icon: Megaphone },
   { id: "smtp", label: "Email / SMTP", icon: Mail },
+  { id: "google", label: "Google", icon: BarChart3 },
   { id: "roles", label: "Roles", icon: Shield },
   { id: "settings", label: "Security", icon: Lock },
 ];
@@ -60,6 +62,7 @@ const panels: Record<string, React.FC> = {
   plagiarism: PlagiarismSettingsEditor,
   ads: AdsEditor,
   smtp: SmtpSettings,
+  google: AnalyticsSettings,
   roles: RoleManager,
   settings: ChangePassword,
 };

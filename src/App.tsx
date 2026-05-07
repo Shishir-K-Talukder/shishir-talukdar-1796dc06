@@ -9,6 +9,7 @@ import { lazy, Suspense } from "react";
 import { PageViewTracker } from "./components/PageViewTracker";
 import { SecurityHeaders } from "./components/SecurityHeaders";
 import { RouteSeo } from "./components/RouteSeo";
+import { GoogleAnalytics } from "./components/GoogleAnalytics";
 import { HomeSkeleton } from "./components/skeletons/HomeSkeleton";
 import { ResearchSkeleton } from "./components/skeletons/ResearchSkeleton";
 import { PublicationsSkeleton } from "./components/skeletons/PublicationsSkeleton";
@@ -51,6 +52,7 @@ const App = () => (
         <BrowserRouter basename={import.meta.env.BASE_URL} future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
           <PageViewTracker />
           <RouteSeo />
+          <GoogleAnalytics />
           <Routes>
             <Route element={<Layout />}>
               <Route path="/" element={<Suspense fallback={<HomeSkeleton />}><Index /></Suspense>} />
