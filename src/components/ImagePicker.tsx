@@ -292,8 +292,8 @@ export function ImagePicker({ value, onChange, label = "Image", open: openProp, 
                 Push to GitHub
               </Button>
             </TabsContent>
-          </Tabs>
             </div>
+          </Tabs>
         </DialogContent>
       </Dialog>
     </div>
