@@ -23,7 +23,7 @@ export function RotatingText({ items, interval = 2600, className = "" }: Rotatin
     <span className={`relative inline-block align-bottom ${className}`} aria-live="polite">
       <span
         key={animKey}
-        className="inline-block animate-fade-in bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent"
+        className="inline-block animate-rotating-text bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent"
       >
         {items[index]}
       </span>
