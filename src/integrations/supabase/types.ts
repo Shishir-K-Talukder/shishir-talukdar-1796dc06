@@ -77,6 +77,33 @@ export type Database = {
         }
         Relationships: []
       }
+      analytics_settings: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          ga_measurement_id: string
+          gsc_verification: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          ga_measurement_id?: string
+          gsc_verification?: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          ga_measurement_id?: string
+          gsc_verification?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       blog_categories: {
         Row: {
           color: string
