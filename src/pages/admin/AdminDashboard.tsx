@@ -24,9 +24,10 @@ import { SktLogo } from "@/components/SktLogo";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { useProfile } from "@/hooks/useProfile";
 
 const navItems = [
-  { id: "profile", label: "Profile", icon: UserCircle },
   { id: "analytics", label: "Analytics", icon: BarChart3 },
   { id: "blog", label: "Blog", icon: PenSquare },
   { id: "categories", label: "Categories", icon: Tag },
@@ -65,11 +66,13 @@ const panels: Record<string, React.FC> = {
 
 export default function AdminDashboard() {
   const { user, signOut } = useAuth();
-  const [active, setActive] = useState("profile");
+  const { name, profileImage } = useProfile();
+  const [active, setActive] = useState("analytics");
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const ActivePanel = panels[active] || AnalyticsDashboard;
+  const initials = (name || user?.email || "A").split(/\s+/).map(s => s[0]).slice(0, 2).join("").toUpperCase();
 
   const SidebarBody = ({ inSheet = false }: { inSheet?: boolean }) => (
     <>
@@ -152,9 +155,23 @@ export default function AdminDashboard() {
               <Menu className="h-5 w-5" />
             </Button>
             <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse shrink-0" />
-            <h1 className="font-heading font-bold text-base capitalize truncate">{navItems.find(n => n.id === active)?.label}</h1>
+          <h1 className="font-heading font-bold text-base capitalize truncate">{active === "profile" ? "Profile" : navItems.find(n => n.id === active)?.label}</h1>
           </div>
-          <span className="text-xs text-muted-foreground hidden sm:block truncate max-w-[40%]">{user?.email}</span>
+          <button
+            type="button"
+            onClick={() => { setActive("profile"); setMobileOpen(false); }}
+            className={cn(
+              "flex items-center gap-2 rounded-full pl-1 pr-2 sm:pr-3 py-1 transition-colors hover:bg-muted/60 border",
+              active === "profile" ? "border-primary/40 bg-primary/5" : "border-transparent"
+            )}
+            title="Edit profile"
+          >
+            <Avatar className="h-7 w-7 sm:h-8 sm:w-8 ring-1 ring-border/60">
+              {profileImage && <AvatarImage src={profileImage} alt={name} />}
+              <AvatarFallback className="text-[10px] font-semibold">{initials}</AvatarFallback>
+            </Avatar>
+            <span className="text-xs text-muted-foreground hidden sm:block truncate max-w-[160px]">{user?.email}</span>
+          </button>
         </header>
 
         <main className="p-3 sm:p-6">

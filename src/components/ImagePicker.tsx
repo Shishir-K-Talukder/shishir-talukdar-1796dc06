@@ -153,19 +153,19 @@ export function ImagePicker({ value, onChange, label = "Image", open: openProp, 
       )}
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
+        <DialogContent className="max-w-2xl max-h-[90vh] p-0 flex flex-col gap-0">
+          <DialogHeader className="px-6 pt-6 pb-3 shrink-0 border-b border-border/50">
             <DialogTitle>Select Image</DialogTitle>
           </DialogHeader>
-          <Tabs defaultValue="library">
-            <TabsList className="mb-4">
+          <Tabs defaultValue="library" className="flex flex-col flex-1 min-h-0">
+            <TabsList className="mx-6 mt-3 mb-2 shrink-0 flex-wrap h-auto justify-start">
               <TabsTrigger value="library">Image Library</TabsTrigger>
               <TabsTrigger value="repo">Repo Images</TabsTrigger>
               <TabsTrigger value="github">Push to GitHub</TabsTrigger>
               <TabsTrigger value="upload">Upload New</TabsTrigger>
             </TabsList>
-
-            <TabsContent value="library">
+            <div className="flex-1 min-h-0 overflow-y-auto px-6 pb-6">
+            <TabsContent value="library" className="mt-0">
               {images.length === 0 ? (
                 <p className="text-center text-muted-foreground py-8">No images in library. Upload one first.</p>
               ) : (
@@ -254,7 +254,7 @@ export function ImagePicker({ value, onChange, label = "Image", open: openProp, 
               </Button>
             </TabsContent>
 
-            <TabsContent value="github" className="space-y-3">
+            <TabsContent value="github" className="space-y-3 mt-0">
               <div className="flex items-start gap-2 rounded-lg border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
                 <Github className="h-4 w-4 mt-0.5 shrink-0 text-primary" />
                 <div>
@@ -292,6 +292,7 @@ export function ImagePicker({ value, onChange, label = "Image", open: openProp, 
                 Push to GitHub
               </Button>
             </TabsContent>
+            </div>
           </Tabs>
         </DialogContent>
       </Dialog>

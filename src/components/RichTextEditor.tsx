@@ -335,10 +335,11 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
       />
 
       <Dialog open={optsOpen} onOpenChange={setOptsOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
+        <DialogContent className="max-w-md max-h-[90vh] p-0 flex flex-col gap-0">
+          <DialogHeader className="px-6 pt-6 pb-3 shrink-0 border-b border-border/50">
             <DialogTitle>Image options</DialogTitle>
           </DialogHeader>
+          <div className="flex-1 min-h-0 overflow-y-auto px-6 py-4 space-y-4">
           {pendingUrl && (
             <div className="space-y-1">
               <div
@@ -401,7 +402,8 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
               <p className="text-[10px] text-muted-foreground mt-1">Leave at 100% for responsive. Image will be cropped to the chosen shape.</p>
             </div>
           </div>
-          <DialogFooter>
+          </div>
+          <DialogFooter className="px-6 py-3 border-t border-border/50 shrink-0">
             <Button type="button" variant="ghost" onClick={() => setOptsOpen(false)}>Cancel</Button>
             <Button type="button" onClick={confirmInsertImage}>Insert image</Button>
           </DialogFooter>
