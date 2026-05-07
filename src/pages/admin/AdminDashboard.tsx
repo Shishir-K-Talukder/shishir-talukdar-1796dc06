@@ -2,7 +2,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import {
   LogOut, Image, Lock, Microscope, BookOpen, Menu,
-  Building2, PenSquare, Megaphone, BarChart3, PanelLeftClose, PanelLeft, Tag, Shield, Mail, UserCircle, Github, Link2,
+  Building2, PenSquare, Megaphone, BarChart3, PanelLeftClose, PanelLeft, Tag, Shield, Mail, UserCircle, Github, Link2, Sparkles, ShieldAlert,
 } from "lucide-react";
 import ImageManager from "./ImageManager";
 import ChangePassword from "./ChangePassword";
@@ -18,6 +18,8 @@ import SmtpSettings from "./SmtpSettings";
 import ProfileEditor from "./ProfileEditor";
 import GithubSettings from "./GithubSettings";
 import FooterProfilesEditor from "./FooterProfilesEditor";
+import AiSettingsEditor from "./AiSettingsEditor";
+import PlagiarismSettingsEditor from "./PlagiarismSettingsEditor";
 import { SktLogo } from "@/components/SktLogo";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
@@ -34,6 +36,8 @@ const navItems = [
   { id: "images", label: "Media", icon: Image },
   { id: "footer-links", label: "Footer Links", icon: Link2 },
   { id: "github", label: "GitHub", icon: Github },
+  { id: "ai", label: "AI Assistant", icon: Sparkles },
+  { id: "plagiarism", label: "Plagiarism", icon: ShieldAlert },
   { id: "ads", label: "Ads", icon: Megaphone },
   { id: "smtp", label: "Email / SMTP", icon: Mail },
   { id: "roles", label: "Roles", icon: Shield },
@@ -51,6 +55,8 @@ const panels: Record<string, React.FC> = {
   images: ImageManager,
   "footer-links": FooterProfilesEditor,
   github: GithubSettings,
+  ai: AiSettingsEditor,
+  plagiarism: PlagiarismSettingsEditor,
   ads: AdsEditor,
   smtp: SmtpSettings,
   roles: RoleManager,
