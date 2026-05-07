@@ -100,7 +100,7 @@ export default function GithubSettings() {
     const load = async () => {
       setLoading(true);
       try {
-        const { data, error, response } = await supabase.functions.invoke("github-upload", {
+        const { data, error } = await supabase.functions.invoke("github-upload", {
           body: { action: "get-config" },
         });
         if (error) throw error;
@@ -114,7 +114,7 @@ export default function GithubSettings() {
         });
         setHasPat(Boolean(data?.hasPat));
       } catch (err: any) {
-        toast.error(await getEdgeFunctionErrorMessage({ error: err, functionName: "github-upload", projectUrl, response: err?.name === "FunctionsHttpError" ? response : undefined }));
+        toast.error(await getEdgeFunctionErrorMessage({ error: err, functionName: "github-upload", projectUrl, response: err?.context instanceof Response ? err.context : undefined }));
       } finally {
         setLoading(false);
       }
@@ -126,7 +126,7 @@ export default function GithubSettings() {
   const saveSettings = async () => {
     setSaving(true);
     try {
-      const { data, error, response } = await supabase.functions.invoke("github-upload", {
+      const { data, error } = await supabase.functions.invoke("github-upload", {
         body: {
           action: "save-config",
           owner: form.owner,
@@ -143,7 +143,7 @@ export default function GithubSettings() {
       setStatus(null);
       toast.success("GitHub settings saved");
     } catch (err: any) {
-      toast.error(await getEdgeFunctionErrorMessage({ error: err, functionName: "github-upload", projectUrl, response: err?.name === "FunctionsHttpError" ? response : undefined }));
+      toast.error(await getEdgeFunctionErrorMessage({ error: err, functionName: "github-upload", projectUrl, response: err?.context instanceof Response ? err.context : undefined }));
     } finally {
       setSaving(false);
     }
@@ -152,13 +152,13 @@ export default function GithubSettings() {
   const checkConfig = async () => {
     setChecking(true);
     try {
-      const { data, error, response } = await supabase.functions.invoke("github-upload", { body: { action: "config" } });
+      const { data, error } = await supabase.functions.invoke("github-upload", { body: { action: "config" } });
       if (error) throw error;
       setStatus(data);
       if (data.ok) toast.success("GitHub connection verified");
       else toast.error(data.error || "Check failed");
     } catch (err: any) {
-      const message = await getEdgeFunctionErrorMessage({ error: err, functionName: "github-upload", projectUrl, response: err?.name === "FunctionsHttpError" ? response : undefined });
+      const message = await getEdgeFunctionErrorMessage({ error: err, functionName: "github-upload", projectUrl, response: err?.context instanceof Response ? err.context : undefined });
       setStatus({ ok: false, error: message });
       toast.error(message);
     } finally {
