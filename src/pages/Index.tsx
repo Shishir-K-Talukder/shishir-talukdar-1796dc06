@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { BentoCard } from "@/components/BentoCard";
 import { CountUp } from "@/components/CountUp";
 import { FloatingMicrobes } from "@/components/FloatingMicrobes";
+import { RotatingText } from "@/components/RotatingText";
 import { useProfile } from "@/hooks/useProfile";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
