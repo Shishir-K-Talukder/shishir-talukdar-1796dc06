@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { Loader2, CheckCircle2, XCircle, Github, ExternalLink, Save, Eye, EyeOff, Upload, Trash2, Copy, RefreshCw, Image as ImageIcon } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { getEdgeFunctionErrorMessage } from "@/lib/edgeFunctionErrors";
 
 const CATEGORIES = [
   { value: "profile", label: "Profile" },
@@ -38,6 +39,7 @@ export default function GithubSettings() {
   const [repoLoading, setRepoLoading] = useState(false);
   const [repoError, setRepoError] = useState<string | null>(null);
   const [deletingFile, setDeletingFile] = useState<string | null>(null);
+  const projectUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
 
   const loadRepo = () => {
     setRepoLoading(true);
@@ -74,7 +76,7 @@ export default function GithubSettings() {
       setGhFile(null); setGhName(""); setGhAlt("");
       setTimeout(loadRepo, 1500);
     } catch (err: any) {
-      toast.error(err.message || "GitHub upload failed");
+      toast.error(await getEdgeFunctionErrorMessage({ error: err, functionName: "github-upload", projectUrl }));
     } finally { setGhUploading(false); }
   };
 
@@ -88,7 +90,7 @@ export default function GithubSettings() {
       toast.success(`Deleted ${filename}`);
       setTimeout(loadRepo, 1500);
     } catch (err: any) {
-      toast.error(err.message || "Delete failed");
+      toast.error(await getEdgeFunctionErrorMessage({ error: err, functionName: "github-upload", projectUrl }));
     } finally { setDeletingFile(null); }
   };
 
@@ -112,7 +114,7 @@ export default function GithubSettings() {
         });
         setHasPat(Boolean(data?.hasPat));
       } catch (err: any) {
-        toast.error(err.message || "Failed to load GitHub settings");
+        toast.error(await getEdgeFunctionErrorMessage({ error: err, functionName: "github-upload", projectUrl, response: err?.context instanceof Response ? err.context : undefined }));
       } finally {
         setLoading(false);
       }
@@ -141,7 +143,7 @@ export default function GithubSettings() {
       setStatus(null);
       toast.success("GitHub settings saved");
     } catch (err: any) {
-      toast.error(err.message || "Failed to save GitHub settings");
+      toast.error(await getEdgeFunctionErrorMessage({ error: err, functionName: "github-upload", projectUrl, response: err?.context instanceof Response ? err.context : undefined }));
     } finally {
       setSaving(false);
     }
@@ -156,8 +158,9 @@ export default function GithubSettings() {
       if (data.ok) toast.success("GitHub connection verified");
       else toast.error(data.error || "Check failed");
     } catch (err: any) {
-      setStatus({ ok: false, error: err.message });
-      toast.error(err.message);
+      const message = await getEdgeFunctionErrorMessage({ error: err, functionName: "github-upload", projectUrl, response: err?.context instanceof Response ? err.context : undefined });
+      setStatus({ ok: false, error: message });
+      toast.error(message);
     } finally {
       setChecking(false);
     }

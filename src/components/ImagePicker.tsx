@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Image as ImageIcon, Upload, Loader2, Check, FolderGit2, Github } from "lucide-react";
 import { toast } from "sonner";
+import { getEdgeFunctionErrorMessage } from "@/lib/edgeFunctionErrors";
 
 interface ImagePickerProps {
   value: string | null;
@@ -29,6 +30,7 @@ export function ImagePicker({ value, onChange, label = "Image" }: ImagePickerPro
   const [ghAlt, setGhAlt] = useState("");
   const [ghCategory, setGhCategory] = useState("general");
   const [ghUploading, setGhUploading] = useState(false);
+  const projectUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
 
   const baseUrl = (import.meta.env.BASE_URL || "/").replace(/\/$/, "");
   const repoBase = `${baseUrl}/uploads`;
@@ -107,7 +109,7 @@ export function ImagePicker({ value, onChange, label = "Image" }: ImagePickerPro
       reloadRepoManifest();
       setOpen(false);
     } catch (err: any) {
-      toast.error(err.message || "GitHub upload failed");
+      toast.error(await getEdgeFunctionErrorMessage({ error: err, functionName: "github-upload", projectUrl, response: err?.context instanceof Response ? err.context : undefined }));
     } finally {
       setGhUploading(false);
     }

@@ -10,6 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { Upload, Trash2, Loader2, Image as ImageIcon, Github, RefreshCw, Copy } from "lucide-react";
+import { getEdgeFunctionErrorMessage } from "@/lib/edgeFunctionErrors";
 
 const CATEGORIES = [
   { value: "profile", label: "Profile Picture" },
@@ -39,6 +40,7 @@ export default function ImageManager() {
   const [repoLoading, setRepoLoading] = useState(false);
   const [repoError, setRepoError] = useState<string | null>(null);
   const [deletingFile, setDeletingFile] = useState<string | null>(null);
+  const projectUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
 
   const loadRepo = async () => {
     setRepoLoading(true);
@@ -51,7 +53,7 @@ export default function ImageManager() {
       if (data?.error) throw new Error(data.error);
       setRepoImages(Array.isArray(data?.images) ? data.images : []);
     } catch (err: any) {
-      setRepoError(err.message);
+      setRepoError(await getEdgeFunctionErrorMessage({ error: err, functionName: "github-upload", projectUrl, response: err?.context instanceof Response ? err.context : undefined }));
     } finally {
       setRepoLoading(false);
     }
@@ -88,7 +90,7 @@ export default function ImageManager() {
       setGhFile(null); setGhName(""); setGhAlt("");
       setTimeout(loadRepo, 1500);
     } catch (err: any) {
-      toast({ title: "GitHub upload failed", description: err.message, variant: "destructive" });
+      toast({ title: "GitHub upload failed", description: await getEdgeFunctionErrorMessage({ error: err, functionName: "github-upload", projectUrl, response: err?.context instanceof Response ? err.context : undefined }), variant: "destructive" });
     } finally {
       setGhUploading(false);
     }
@@ -106,7 +108,7 @@ export default function ImageManager() {
       toast({ title: "Deleted from GitHub", description: filename });
       setTimeout(loadRepo, 1500);
     } catch (err: any) {
-      toast({ title: "Delete failed", description: err.message, variant: "destructive" });
+      toast({ title: "Delete failed", description: await getEdgeFunctionErrorMessage({ error: err, functionName: "github-upload", projectUrl, response: err?.context instanceof Response ? err.context : undefined }), variant: "destructive" });
     } finally {
       setDeletingFile(null);
     }
