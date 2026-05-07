@@ -154,7 +154,7 @@ export default function Index() {
 
         {/* Featured Research 1 — with image */}
         <BentoCard delay={0.35} className="overflow-hidden">
-          <img src={researchAmrImg} alt="Antibiotic resistance research — petri dish analysis" className="w-full h-32 object-cover rounded-xl mb-3 -mt-1" loading="lazy" width={800} height={544} />
+          <img src={researchAmrImg} alt="Antibiotic resistance research — petri dish analysis" className="w-full h-32 object-cover rounded-xl mb-3 -mt-1" loading="lazy" decoding="async" width={512} height={348} />
           <div className="flex items-center gap-2 mb-2">
             <Microscope className="h-4 w-4 text-primary" />
             <span className="text-xs font-mono text-muted-foreground uppercase tracking-wider">Featured</span>
@@ -170,7 +170,7 @@ export default function Index() {
 
         {/* Featured Research 2 — with image */}
         <BentoCard delay={0.4} className="overflow-hidden">
-          <img src={researchEcoImg} alt="Microbial ecology dynamics — environmental samples" className="w-full h-32 object-cover rounded-xl mb-3 -mt-1" loading="lazy" width={800} height={544} />
+          <img src={researchEcoImg} alt="Microbial ecology dynamics — environmental samples" className="w-full h-32 object-cover rounded-xl mb-3 -mt-1" loading="lazy" decoding="async" width={512} height={348} />
           <div className="flex items-center gap-2 mb-2">
             <Leaf className="h-4 w-4 text-accent" />
             <span className="text-xs font-mono text-muted-foreground uppercase tracking-wider">Featured</span>
