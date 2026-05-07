@@ -64,7 +64,7 @@ export default function Index() {
         <BentoCard className="md:col-span-2 lg:col-span-2 lg:row-span-2 flex min-h-[28rem] flex-col justify-between gap-6 relative overflow-hidden" delay={0}>
           {/* Background lab image */}
           <div className="absolute inset-0 z-0">
-            <img src={labHeroImg} alt="" className="h-full w-full object-cover opacity-10" width={800} height={800} />
+            <img src={labHeroImg} alt="" className="h-full w-full object-cover opacity-10" width={800} height={800} loading="lazy" decoding="async" />
             <div className="absolute inset-0 bg-gradient-to-t from-card via-card/90 to-card/60" />
           </div>
 
