@@ -21,7 +21,7 @@ import FooterProfilesEditor from "./FooterProfilesEditor";
 import { SktLogo } from "@/components/SktLogo";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 
 const navItems = [
   { id: "profile", label: "Profile", icon: UserCircle },
