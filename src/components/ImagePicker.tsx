@@ -14,10 +14,15 @@ interface ImagePickerProps {
   value: string | null;
   onChange: (url: string | null) => void;
   label?: string;
+  open?: boolean;
+  onOpenChange?: (v: boolean) => void;
+  hideTrigger?: boolean;
 }
 
-export function ImagePicker({ value, onChange, label = "Image" }: ImagePickerProps) {
-  const [open, setOpen] = useState(false);
+export function ImagePicker({ value, onChange, label = "Image", open: openProp, onOpenChange, hideTrigger }: ImagePickerProps) {
+  const [openState, setOpenState] = useState(false);
+  const open = openProp !== undefined ? openProp : openState;
+  const setOpen = (v: boolean) => { onOpenChange ? onOpenChange(v) : setOpenState(v); };
   const { data: images = [] } = useSiteImages();
   const upload = useUploadImage();
   const [file, setFile] = useState<File | null>(null);
