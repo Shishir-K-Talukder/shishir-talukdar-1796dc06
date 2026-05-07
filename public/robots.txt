@@ -23,8 +23,4 @@ Allow: /
 Disallow: /SKT-admin
 Disallow: /api/
 
-Crawl-delay: 1
-
-Host: https://shishirkumartalukder.com
-
 Sitemap: https://shishirkumartalukder.com/sitemap.xml
