@@ -32,6 +32,9 @@ export default function Index() {
         collaborations: collaborations.count ?? 0,
       };
     },
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
   });
 
   // Subscribe to realtime changes so the homepage updates instantly
@@ -108,7 +111,7 @@ export default function Index() {
                 <p className="text-sm text-muted-foreground">Specialist in</p>
                 <div className="mt-3 text-sm font-medium min-h-[3rem]">
                   <RotatingText
-                    holdDuration={10}
+                    holdDuration={5}
                     items={[
                       "Antimicrobial Resistance Specialist",
                       "Public Health Microbiology & Epidemiological Surveillance",
