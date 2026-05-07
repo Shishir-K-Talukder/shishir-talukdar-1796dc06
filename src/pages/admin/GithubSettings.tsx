@@ -5,9 +5,10 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, CheckCircle2, XCircle, Github, ExternalLink, Save, Eye, EyeOff, Upload, Trash2, Copy, RefreshCw, Image as ImageIcon } from "lucide-react";
+import { Loader2, CheckCircle2, XCircle, Github, ExternalLink, Save, Eye, EyeOff, Upload, Trash2, Copy, RefreshCw, Image as ImageIcon, Pencil } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { getEdgeFunctionErrorMessage } from "@/lib/edgeFunctionErrors";
 
 const CATEGORIES = [
@@ -39,6 +40,8 @@ export default function GithubSettings() {
   const [repoLoading, setRepoLoading] = useState(false);
   const [repoError, setRepoError] = useState<string | null>(null);
   const [deletingFile, setDeletingFile] = useState<string | null>(null);
+  const [editing, setEditing] = useState<{ file: string; name: string; alt: string; category: string } | null>(null);
+  const [savingMeta, setSavingMeta] = useState(false);
   const projectUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
 
   const loadRepo = () => {
@@ -95,6 +98,23 @@ export default function GithubSettings() {
   };
 
   const copyUrl = (url: string) => { navigator.clipboard.writeText(url); toast.success("URL copied"); };
+
+  const saveMeta = async () => {
+    if (!editing) return;
+    setSavingMeta(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("github-upload", {
+        body: { action: "update-meta", filename: editing.file, name: editing.name, alt: editing.alt, category: editing.category },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast.success("Metadata updated");
+      setEditing(null);
+      setTimeout(loadRepo, 1500);
+    } catch (err: any) {
+      toast.error(await getEdgeFunctionErrorMessage({ error: err, functionName: "github-upload", projectUrl }));
+    } finally { setSavingMeta(false); }
+  };
 
   useEffect(() => {
     const load = async () => {
@@ -361,6 +381,9 @@ export default function GithubSettings() {
                       <Button size="icon" variant="secondary" className="h-7 w-7" onClick={() => copyUrl(url)} title="Copy URL">
                         <Copy className="h-3.5 w-3.5" />
                       </Button>
+                      <Button size="icon" variant="secondary" className="h-7 w-7" onClick={() => setEditing({ file: img.file, name: img.name || "", alt: img.alt || "", category: img.category || "general" })} title="Edit metadata">
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
                       <Button size="icon" variant="destructive" className="h-7 w-7" onClick={() => handleGithubDelete(img.file)} disabled={deletingFile === img.file} title="Delete">
                         {deletingFile === img.file ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
                       </Button>
@@ -372,6 +395,45 @@ export default function GithubSettings() {
           )}
         </CardContent>
       </Card>
+
+      <Dialog open={!!editing} onOpenChange={(v) => !v && setEditing(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Image Metadata</DialogTitle>
+          </DialogHeader>
+          {editing && (
+            <div className="space-y-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs">File</Label>
+                <Input value={editing.file} disabled />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Display name</Label>
+                <Input value={editing.name} onChange={(e) => setEditing({ ...editing, name: e.target.value })} />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Alt text</Label>
+                <Input value={editing.alt} onChange={(e) => setEditing({ ...editing, alt: e.target.value })} />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Category</Label>
+                <Select value={editing.category} onValueChange={(v) => setEditing({ ...editing, category: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {CATEGORIES.map((c) => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditing(null)}>Cancel</Button>
+            <Button onClick={saveMeta} disabled={savingMeta}>
+              {savingMeta ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />} Save
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
