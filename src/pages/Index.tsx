@@ -105,9 +105,10 @@ export default function Index() {
               </p>
               <div className="mt-4">
                 <p className="font-semibold">{profile.title}</p>
-                <p className="text-sm text-muted-foreground">{profile.subtitle}</p>
+                <p className="text-sm text-muted-foreground">Specialist in</p>
                 <div className="mt-3 text-sm font-medium min-h-[3rem]">
                   <RotatingText
+                    holdDuration={10}
                     items={[
                       "Antimicrobial Resistance Specialist",
                       "Public Health Microbiology & Epidemiological Surveillance",
