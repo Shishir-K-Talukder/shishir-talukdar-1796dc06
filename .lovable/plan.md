@@ -1,49 +1,39 @@
-# Plan: Professional Hero Profile Photo
+## What's wrong
 
-## Goal
-Make the profile picture in the hero bento card significantly larger, visually highlighted, and look polished on mobile, tablet, and desktop.
+Your deployed GitHub Pages URL returns **"404 — There isn't a GitHub Pages site here"**:
 
-## Changes (single file: `src/pages/Index.tsx`)
+`https://shishir-kumar-talukder-portfolio.github.io/Shishir-Kumar-Talukder-Portfolio/`
 
-Restructure the hero card so the profile photo becomes a true focal point instead of a 64x64 thumbnail tucked next to the name.
+The reason is in `vite.config.ts`:
 
-### New hero layout
-- Two-column grid inside the hero card on `sm+`: text on the left, photo on the right.
-- On mobile (<640px), photo stacks above the text and is centered.
-- Profile image sizes:
-  - Mobile: `h-40 w-40` (160px)
-  - Tablet (`sm`): `h-48 w-48`
-  - Desktop (`lg`): `h-56 w-56` to `h-64 w-64`
-- Replace the small avatar that currently sits next to the name; the name/title block stays but without the inline mini avatar.
+```ts
+base: process.env.GITHUB_PAGES === "true" ? "/shishir-talukdar/" : "/",
+```
 
-### Professional highlight effects
-- Circular frame with layered ring: `ring-4 ring-primary/40 ring-offset-4 ring-offset-card`.
-- Soft glow halo behind the image using a blurred radial gradient (`bg-primary/30 blur-3xl`) positioned absolutely behind the photo.
-- Subtle conic/gradient border using a wrapper div with `bg-gradient-to-br from-primary via-accent to-primary p-[3px] rounded-full` — image sits inside on a `bg-card` inner ring.
-- Hover: gentle `scale-105` + glow intensifies (`transition-all duration-500`).
-- Floating animation reusing the existing `animate-floating-microbe` (slowed) or a new lightweight `float` keyframe — optional, very subtle.
-- `object-cover object-center` to ensure face stays centered regardless of aspect.
-- `loading="eager"` + `fetchpriority="high"` for LCP.
+The `base` is set to `/shishir-talukdar/`, but your actual GitHub repo is named **`Shishir-Kumar-Talukder-Portfolio`**. So all built assets reference the wrong sub-path and GitHub Pages can't find them.
 
-### Background image adjustment
-- Slightly reduce lab background opacity (`opacity-10`) so the highlighted portrait stands out more.
-- Keep the existing gradient overlay.
+(Good news: your admin account is already correct in the database — `shishir.talukdar.017@gmail.com` exists in `auth.users` and already has the `admin` role in `user_roles`. No DB action needed.)
 
-### Buttons & text
-- Keep CTA buttons; ensure they wrap nicely under the text column on small screens.
-- Name + title moves directly under the heading (no duplicate avatar).
+## The fix (one line)
 
-## Responsive behavior
-| Breakpoint | Layout | Photo size |
-|---|---|---|
-| <640px | Stacked, photo on top, centered | 160px |
-| 640–1024px | Side-by-side, text left / photo right | 192px |
-| ≥1024px | Side-by-side, larger | 224–256px |
+Change line 9 of `vite.config.ts` to use the correct repo name:
 
-## Out of scope
-- No DB changes.
-- No new dependencies.
-- No changes to other pages.
+```ts
+base: process.env.GITHUB_PAGES === "true" ? "/Shishir-Kumar-Talukder-Portfolio/" : "/",
+```
 
-## Files
-- `src/pages/Index.tsx` — hero `BentoCard` markup only.
+After this change is committed, GitHub Actions will rebuild and redeploy automatically (the workflow already builds with `GITHUB_PAGES: "true"` and the right secrets).
+
+## After the redeploy finishes
+
+1. Open: `https://shishir-kumar-talukder-portfolio.github.io/Shishir-Kumar-Talukder-Portfolio/`
+2. Go to: `/SKT-admin`
+3. Log in with `shishir.talukdar.017@gmail.com` and your password — admin access will work because the role is already set in the database.
+
+## Also check (one-time, in GitHub UI)
+
+In your GitHub repo → **Settings → Pages**, make sure **Source = "GitHub Actions"** (not "Deploy from a branch"). If it's wrong, no deploy will ever publish, regardless of code fixes.
+
+## Approve to apply
+
+Once you approve, I'll update `vite.config.ts` with the correct base path. The next push/build will publish the site at the correct URL.
