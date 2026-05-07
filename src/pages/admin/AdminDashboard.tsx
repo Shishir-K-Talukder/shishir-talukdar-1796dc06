@@ -2,7 +2,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import {
   LogOut, Image, Lock, Microscope, BookOpen, Menu,
-  Building2, PenSquare, Megaphone, BarChart3, PanelLeftClose, PanelLeft, Tag, Shield, Mail, UserCircle, Github, Link2, Sparkles, ShieldAlert,
+  Building2, PenSquare, Megaphone, BarChart3, PanelLeftClose, PanelLeft, Tag, Shield, Mail, UserCircle, Github, Link2, Sparkles, ShieldAlert, Globe,
 } from "lucide-react";
 import ImageManager from "./ImageManager";
 import ChangePassword from "./ChangePassword";
@@ -42,7 +42,7 @@ const navItems = [
   { id: "plagiarism", label: "Plagiarism", icon: ShieldAlert },
   { id: "ads", label: "Ads", icon: Megaphone },
   { id: "smtp", label: "Email / SMTP", icon: Mail },
-  { id: "google", label: "Google", icon: BarChart3 },
+  { id: "google", label: "Google", icon: Globe },
   { id: "roles", label: "Roles", icon: Shield },
   { id: "settings", label: "Security", icon: Lock },
 ];
