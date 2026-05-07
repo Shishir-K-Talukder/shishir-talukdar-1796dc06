@@ -30,7 +30,7 @@ export function RotatingText({
   }, [index, items.length, totalMs]);
 
   return (
-    <span className={`relative inline-block align-bottom ${className}`} aria-live="polite">
+    <span className={`relative block leading-snug ${className}`} aria-live="polite">
       <AnimatePresence mode="wait">
         <motion.span
           key={index}
@@ -41,7 +41,7 @@ export function RotatingText({
             hidden: {},
             visible: { transition: { staggerChildren: wordStagger } },
           }}
-          className="inline-block"
+          className="block"
         >
           {words.map((w, i) => (
             <motion.span
