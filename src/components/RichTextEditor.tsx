@@ -19,8 +19,7 @@ import {
   Image as ImageIcon, Link as LinkIcon, Highlighter, Undo, Redo,
   Minus, RemoveFormatting, Table as TableIcon, Plus, Trash2,
 } from "lucide-react";
-import { useEffect, useCallback } from "react";
-import { useState } from "react";
+import { useEffect, useCallback, useState } from "react";
 import { ImagePicker } from "@/components/ImagePicker";
 import {
   DropdownMenu,
