@@ -254,7 +254,7 @@ export function ImagePicker({ value, onChange, label = "Image", open: openProp, 
               </Button>
             </TabsContent>
 
-            <TabsContent value="github" className="space-y-3">
+            <TabsContent value="github" className="space-y-3 mt-0">
               <div className="flex items-start gap-2 rounded-lg border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
                 <Github className="h-4 w-4 mt-0.5 shrink-0 text-primary" />
                 <div>
@@ -293,6 +293,7 @@ export function ImagePicker({ value, onChange, label = "Image", open: openProp, 
               </Button>
             </TabsContent>
           </Tabs>
+            </div>
         </DialogContent>
       </Dialog>
     </div>
