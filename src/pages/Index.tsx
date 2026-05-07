@@ -105,6 +105,18 @@ export default function Index() {
               <div className="mt-4">
                 <p className="font-semibold">{profile.title}</p>
                 <p className="text-sm text-muted-foreground">{profile.subtitle}</p>
+                <div className="mt-3 text-sm font-medium min-h-[1.5rem]">
+                  <RotatingText
+                    items={[
+                      "Antimicrobial Resistance Specialist",
+                      "Public Health Microbiology & Epidemiological Surveillance",
+                      "Environmental & Climate Microbiology",
+                      "Bioinformatics & Computational Microbiology",
+                      "Pharmaceutical & Industrial Microbiology",
+                      "Food & Agricultural Microbiology",
+                    ]}
+                  />
+                </div>
               </div>
             </div>
           </div>
