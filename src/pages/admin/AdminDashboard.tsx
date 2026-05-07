@@ -22,7 +22,6 @@ import { SktLogo } from "@/components/SktLogo";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { useIsMobile } from "@/hooks/use-mobile";
 
 const navItems = [
   { id: "profile", label: "Profile", icon: UserCircle },
@@ -63,7 +62,6 @@ export default function AdminDashboard() {
   const [active, setActive] = useState("profile");
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const isMobile = useIsMobile();
 
   const ActivePanel = panels[active] || AnalyticsDashboard;
 
