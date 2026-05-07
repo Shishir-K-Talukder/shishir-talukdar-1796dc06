@@ -10,7 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Pencil, Trash2, Eye, EyeOff, Calendar as CalendarIcon, Sparkles, Loader2, History, Maximize2, Minimize2, Smartphone, Monitor, ShieldAlert } from "lucide-react";
+import { Plus, Pencil, Trash2, Eye, EyeOff, Calendar as CalendarIcon, Sparkles, Loader2, History, Maximize2, Minimize2, Smartphone, Monitor } from "lucide-react";
 import { ImagePicker } from "@/components/ImagePicker";
 import { RichTextEditor } from "@/components/RichTextEditor";
 import { BlogSeoAnalyzer } from "@/components/BlogSeoAnalyzer";
@@ -546,6 +546,28 @@ export default function BlogEditor() {
               {save.isPending ? "Saving…" : "Save"}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Revisions */}
+      <Dialog open={showRevisions} onOpenChange={setShowRevisions}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader><DialogTitle>Revision history</DialogTitle></DialogHeader>
+          {revisions.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-6 text-center">No revisions yet. They are created on every save.</p>
+          ) : (
+            <div className="space-y-2 max-h-[60vh] overflow-y-auto">
+              {revisions.map((r: any) => (
+                <div key={r.id} className="flex items-center justify-between gap-2 rounded-md border border-border p-3">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium truncate">{r.title || "Untitled"}</p>
+                    <p className="text-[11px] text-muted-foreground">{new Date(r.created_at).toLocaleString()}</p>
+                  </div>
+                  <Button size="sm" variant="outline" onClick={() => restoreRevision(r)}>Load</Button>
+                </div>
+              ))}
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>
