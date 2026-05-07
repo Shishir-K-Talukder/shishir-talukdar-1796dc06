@@ -41,8 +41,9 @@ interface ConfigBody { action: "config" }
 interface DeleteBody { action: "delete"; filename: string }
 
 interface ListBody { action: "list" }
+interface UpdateMetaBody { action: "update-meta"; filename: string; name?: string; alt?: string; category?: string }
 
-type Body = UploadBody | GetConfigBody | SaveConfigBody | ConfigBody | DeleteBody | ListBody;
+type Body = UploadBody | GetConfigBody | SaveConfigBody | ConfigBody | DeleteBody | ListBody | UpdateMetaBody;
 
 async function ghFetch(path: string, token: string, init: RequestInit = {}) {
   const res = await fetch(`${GH_API}${path}`, {
@@ -231,6 +232,33 @@ Deno.serve(async (req) => {
         await putFile(manifestPath, newContent, `chore(uploads): remove ${filename} from manifest`, manifestFile.sha);
       }
       return new Response(JSON.stringify({ ok: true, deleted: Boolean(existing) }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    // UPDATE METADATA (manifest only)
+    if ("action" in body && body.action === "update-meta") {
+      const filename = body.filename.replace(/[^a-zA-Z0-9._-]/g, "_");
+      const manifestPath = "public/uploads/manifest.json";
+      const manifestFile = await getFile(manifestPath);
+      let manifest: { images: any[] } = { images: [] };
+      if (manifestFile) {
+        try { manifest = JSON.parse(manifestFile.content); } catch { /* ignore */ }
+      }
+      manifest.images = manifest.images || [];
+      const idx = manifest.images.findIndex((i: any) => i.file === filename);
+      if (idx < 0) {
+        return new Response(JSON.stringify({ error: "Image not found in manifest" }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      const cur = manifest.images[idx];
+      manifest.images[idx] = {
+        ...cur,
+        name: body.name ?? cur.name,
+        alt: body.alt ?? cur.alt,
+        category: body.category ?? cur.category,
+        file: filename,
+      };
+      const newContent = btoa(JSON.stringify(manifest, null, 2) + "\n");
+      await putFile(manifestPath, newContent, `chore(uploads): update metadata for ${filename}`, manifestFile?.sha);
+      return new Response(JSON.stringify({ ok: true, image: manifest.images[idx] }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     // LIST repo media (manifest + raw URLs straight from GitHub)
