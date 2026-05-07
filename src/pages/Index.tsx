@@ -9,10 +9,10 @@ import { useProfile } from "@/hooks/useProfile";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect } from "react";
-import profileFallback from "@/assets/profile-placeholder.jpg";
-import labHeroImg from "@/assets/lab-hero.jpg";
-import researchAmrImg from "@/assets/research-amr.jpg";
-import researchEcoImg from "@/assets/research-ecology.jpg";
+import profileFallback from "@/assets/profile-placeholder.webp";
+import labHeroImg from "@/assets/lab-hero.webp";
+import researchAmrImg from "@/assets/research-amr.webp";
+import researchEcoImg from "@/assets/research-ecology.webp";
 
 export default function Index() {
   const profile = useProfile();

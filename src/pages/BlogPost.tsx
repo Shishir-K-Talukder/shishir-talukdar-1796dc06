@@ -9,7 +9,7 @@ import { useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 import DOMPurify from "dompurify";
 import { useProfile } from "@/hooks/useProfile";
-import profileFallback from "@/assets/profile-placeholder.jpg";
+import profileFallback from "@/assets/profile-placeholder.webp";
 import { AdSenseLoader } from "@/components/AdSenseLoader";
 import { useContentValue } from "@/hooks/useSiteContent";
 
