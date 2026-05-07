@@ -1,12 +1,8 @@
 User-agent: Googlebot
 Allow: /
-Disallow: /SKT-admin
-Disallow: /admin
 
 User-agent: Bingbot
 Allow: /
-Disallow: /SKT-admin
-Disallow: /admin
 
 User-agent: Twitterbot
 Allow: /
@@ -22,8 +18,6 @@ Allow: /
 
 User-agent: *
 Allow: /
-Disallow: /SKT-admin
-Disallow: /admin
 Disallow: /api/
 
 # Crawl-delay for polite bots
