@@ -20,6 +20,8 @@ import {
   Minus, RemoveFormatting, Table as TableIcon, Plus, Trash2,
 } from "lucide-react";
 import { useEffect, useCallback } from "react";
+import { useState } from "react";
+import { ImagePicker } from "@/components/ImagePicker";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -56,6 +58,7 @@ function ToolbarDivider() {
 }
 
 export function RichTextEditor({ content, onChange, placeholder }: RichTextEditorProps) {
+  const [pickerOpen, setPickerOpen] = useState(false);
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -89,10 +92,15 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
     }
   }, [content]);
 
-  const addImage = useCallback(() => {
+  const addImageFromUrl = useCallback(() => {
     if (!editor) return;
     const url = window.prompt("Image URL:");
     if (url) editor.chain().focus().setImage({ src: url }).run();
+  }, [editor]);
+
+  const insertPickedImage = useCallback((url: string | null) => {
+    if (!editor || !url) return;
+    editor.chain().focus().setImage({ src: url }).run();
   }, [editor]);
 
   const addLink = useCallback(() => {
@@ -220,9 +228,21 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
         <ToolbarButton onClick={addLink} active={editor.isActive("link")} title="Link">
           <LinkIcon className="h-4 w-4" />
         </ToolbarButton>
-        <ToolbarButton onClick={addImage} title="Image">
-          <ImageIcon className="h-4 w-4" />
-        </ToolbarButton>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button type="button" variant="ghost" size="icon" className="h-8 w-8 shrink-0" title="Insert Image">
+              <ImageIcon className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start">
+            <DropdownMenuItem onClick={() => setPickerOpen(true)}>
+              From Image Library / Repo
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={addImageFromUrl}>
+              From URL
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
         <ToolbarDivider />
 
@@ -233,6 +253,13 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
 
       {/* Editor */}
       <EditorContent editor={editor} />
+      <ImagePicker
+        value={null}
+        onChange={insertPickedImage}
+        open={pickerOpen}
+        onOpenChange={setPickerOpen}
+        hideTrigger
+      />
     </div>
   );
 }
