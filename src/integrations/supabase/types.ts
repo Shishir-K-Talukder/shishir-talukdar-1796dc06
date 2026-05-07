@@ -47,6 +47,36 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_settings: {
+        Row: {
+          api_key: string
+          base_url: string
+          enabled: boolean
+          id: string
+          model: string
+          provider: string
+          updated_at: string
+        }
+        Insert: {
+          api_key?: string
+          base_url?: string
+          enabled?: boolean
+          id?: string
+          model?: string
+          provider?: string
+          updated_at?: string
+        }
+        Update: {
+          api_key?: string
+          base_url?: string
+          enabled?: boolean
+          id?: string
+          model?: string
+          provider?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       blog_categories: {
         Row: {
           color: string
@@ -80,6 +110,51 @@ export type Database = {
           slug?: string
           sort_order?: number
           updated_at?: string
+        }
+        Relationships: []
+      }
+      blog_post_revisions: {
+        Row: {
+          content: string
+          cover_image_url: string | null
+          created_at: string
+          created_by: string | null
+          excerpt: string
+          focus_keyword: string
+          id: string
+          meta_description: string
+          post_id: string
+          seo_title: string
+          tags: string[]
+          title: string
+        }
+        Insert: {
+          content?: string
+          cover_image_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          excerpt?: string
+          focus_keyword?: string
+          id?: string
+          meta_description?: string
+          post_id: string
+          seo_title?: string
+          tags?: string[]
+          title?: string
+        }
+        Update: {
+          content?: string
+          cover_image_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          excerpt?: string
+          focus_keyword?: string
+          id?: string
+          meta_description?: string
+          post_id?: string
+          seo_title?: string
+          tags?: string[]
+          title?: string
         }
         Relationships: []
       }
@@ -293,6 +368,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      plagiarism_settings: {
+        Row: {
+          api_key: string
+          api_username: string
+          enabled: boolean
+          id: string
+          provider: string
+          updated_at: string
+        }
+        Insert: {
+          api_key?: string
+          api_username?: string
+          enabled?: boolean
+          id?: string
+          provider?: string
+          updated_at?: string
+        }
+        Update: {
+          api_key?: string
+          api_username?: string
+          enabled?: boolean
+          id?: string
+          provider?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       publications: {
         Row: {

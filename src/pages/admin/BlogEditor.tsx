@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Pencil, Trash2, Eye, EyeOff, Calendar as CalendarIcon, Sparkles, Loader2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Eye, EyeOff, Calendar as CalendarIcon, Sparkles, Loader2, History, Maximize2, Minimize2, Smartphone, Monitor } from "lucide-react";
 import { ImagePicker } from "@/components/ImagePicker";
 import { RichTextEditor } from "@/components/RichTextEditor";
 import { BlogSeoAnalyzer } from "@/components/BlogSeoAnalyzer";
@@ -20,6 +20,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { cn as cnUtil } from "@/lib/utils";
 
 type BlogPost = {
   id: string;
@@ -58,6 +59,12 @@ export default function BlogEditor() {
   const [scheduledDate, setScheduledDate] = useState<Date | undefined>();
   const [aiLoading, setAiLoading] = useState<string | null>(null);
   const [aiSuggestions, setAiSuggestions] = useState<{ type: string; items: string[] } | null>(null);
+  const [focusMode, setFocusMode] = useState(false);
+  const [previewMode, setPreviewMode] = useState<"desktop" | "mobile">("desktop");
+  const [showRevisions, setShowRevisions] = useState(false);
+  const [restoredDraftPrompt, setRestoredDraftPrompt] = useState<null | (typeof emptyPost & { ts: number })>(null);
+  const autosaveKey = editing ? `blog-draft:${editing.id}` : "blog-draft:new";
+  const lastSavedRef = useRef<string>("");
 
   const { data: posts = [], isLoading } = useQuery({
     queryKey: ["admin-blog"],
@@ -111,18 +118,108 @@ export default function BlogEditor() {
   const openNew = () => {
     setEditing(null); setForm(emptyPost); setTagsInput("");
     setScheduledDate(undefined); setAiSuggestions(null); setOpen(true);
+    try {
+      const raw = localStorage.getItem("blog-draft:new");
+      if (raw) setRestoredDraftPrompt(JSON.parse(raw));
+    } catch {}
   };
 
   const openEdit = (p: BlogPost) => {
     setEditing(p); setForm(p); setTagsInput(p.tags.join(", "));
     setScheduledDate(p.published_at ? new Date(p.published_at) : undefined);
     setAiSuggestions(null); setOpen(true);
+    try {
+      const raw = localStorage.getItem(`blog-draft:${p.id}`);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed.ts && parsed.title && JSON.stringify({ ...p }) !== JSON.stringify({ ...parsed, ts: undefined })) {
+          setRestoredDraftPrompt(parsed);
+        }
+      }
+    } catch {}
+  };
+
+  // Autosave to localStorage every 5s while dialog is open
+  useEffect(() => {
+    if (!open) return;
+    const handle = setInterval(() => {
+      try {
+        const snap = JSON.stringify({ ...form, tagsInput, ts: Date.now() });
+        if (snap !== lastSavedRef.current) {
+          localStorage.setItem(autosaveKey, snap);
+          lastSavedRef.current = snap;
+        }
+      } catch {}
+    }, 5000);
+    return () => clearInterval(handle);
+  }, [open, form, tagsInput, autosaveKey]);
+
+  const restoreDraft = () => {
+    if (!restoredDraftPrompt) return;
+    const { ts, ...rest } = restoredDraftPrompt as any;
+    setForm({ ...emptyPost, ...rest });
+    if (rest.tagsInput) setTagsInput(rest.tagsInput);
+    setRestoredDraftPrompt(null);
+    toast.success("Draft restored");
+  };
+  const discardDraft = () => {
+    localStorage.removeItem(autosaveKey);
+    setRestoredDraftPrompt(null);
+  };
+
+  // Revisions
+  const { data: revisions = [] } = useQuery({
+    queryKey: ["blog-revisions", editing?.id],
+    enabled: !!editing?.id && showRevisions,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("blog_post_revisions")
+        .select("*")
+        .eq("post_id", editing!.id)
+        .order("created_at", { ascending: false })
+        .limit(20);
+      if (error) throw error;
+      return data as any[];
+    },
+  });
+
+  const restoreRevision = (rev: any) => {
+    setForm((f) => ({
+      ...f,
+      title: rev.title,
+      content: rev.content,
+      excerpt: rev.excerpt,
+      meta_description: rev.meta_description,
+      seo_title: rev.seo_title,
+      focus_keyword: rev.focus_keyword,
+      cover_image_url: rev.cover_image_url,
+      tags: rev.tags || [],
+    }));
+    setTagsInput((rev.tags || []).join(", "));
+    setShowRevisions(false);
+    toast.success("Revision loaded — click Save to apply");
   };
 
   const handleSave = () => {
     const tags = tagsInput.split(",").map(t => t.trim()).filter(Boolean);
     const slug = form.slug || slugify(form.title);
-    save.mutate({ ...form, tags, slug, ...(editing ? { id: editing.id } : {}) });
+    save.mutate({ ...form, tags, slug, ...(editing ? { id: editing.id } : {}) }, {
+      onSuccess: async () => {
+        // Snapshot a revision for existing posts
+        if (editing?.id) {
+          try {
+            await (supabase as any).from("blog_post_revisions").insert({
+              post_id: editing.id,
+              title: form.title, content: form.content, excerpt: form.excerpt,
+              meta_description: form.meta_description, seo_title: form.seo_title,
+              focus_keyword: form.focus_keyword, cover_image_url: form.cover_image_url,
+              tags,
+            });
+          } catch (e) { console.warn("revision snapshot failed", e); }
+        }
+        try { localStorage.removeItem(autosaveKey); } catch {}
+      },
+    });
   };
 
   // AI helper
@@ -212,12 +309,39 @@ export default function BlogEditor() {
       )}
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-6xl max-h-[95vh] overflow-y-auto">
+        <DialogContent className={cnUtil("max-h-[95vh] overflow-y-auto", focusMode ? "max-w-4xl" : "max-w-6xl")}>
           <DialogHeader>
-            <DialogTitle>{editing ? "Edit Post" : "New Post"}</DialogTitle>
+            <div className="flex items-center justify-between gap-2">
+              <DialogTitle>{editing ? "Edit Post" : "New Post"}</DialogTitle>
+              <div className="flex items-center gap-1">
+                {editing && (
+                  <Button type="button" variant="ghost" size="sm" className="h-8 gap-1 text-xs" onClick={() => setShowRevisions(true)} title="Revision history">
+                    <History className="h-3.5 w-3.5" /> Revisions
+                  </Button>
+                )}
+                <Button type="button" variant="ghost" size="sm" className="h-8 gap-1 text-xs" onClick={() => setPreviewMode(p => p === "mobile" ? "desktop" : "mobile")} title="Preview mode">
+                  {previewMode === "mobile" ? <Monitor className="h-3.5 w-3.5" /> : <Smartphone className="h-3.5 w-3.5" />}
+                  {previewMode === "mobile" ? "Desktop" : "Mobile"}
+                </Button>
+                <Button type="button" variant="ghost" size="sm" className="h-8 gap-1 text-xs" onClick={() => setFocusMode(f => !f)} title="Distraction-free mode">
+                  {focusMode ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
+                  {focusMode ? "Exit focus" : "Focus"}
+                </Button>
+              </div>
+            </div>
           </DialogHeader>
 
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
+          {restoredDraftPrompt && (
+            <div className="mb-2 flex items-center justify-between gap-2 rounded-lg border border-primary/40 bg-primary/5 p-3 text-xs">
+              <span>📝 An unsaved draft was found from {new Date(restoredDraftPrompt.ts).toLocaleString()}.</span>
+              <div className="flex gap-2">
+                <Button size="sm" variant="ghost" onClick={discardDraft}>Discard</Button>
+                <Button size="sm" onClick={restoreDraft}>Restore</Button>
+              </div>
+            </div>
+          )}
+
+          <div className={cnUtil("grid gap-6", focusMode ? "grid-cols-1" : "grid-cols-1 lg:grid-cols-[1fr_320px]", previewMode === "mobile" && "max-w-[420px] mx-auto")}>
             {/* Main editor area */}
             <div className="space-y-4 min-w-0">
               <Tabs defaultValue="content" className="w-full">
@@ -349,6 +473,7 @@ export default function BlogEditor() {
             </div>
 
             {/* Right sidebar: SEO Score + AI */}
+            {!focusMode && (
             <div className="space-y-4">
               <Card>
                 <CardHeader className="pb-2 pt-4 px-4">
@@ -414,6 +539,7 @@ export default function BlogEditor() {
                 </CardContent>
               </Card>
             </div>
+            )}
           </div>
 
           <DialogFooter>
@@ -422,6 +548,28 @@ export default function BlogEditor() {
               {save.isPending ? "Saving…" : "Save"}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Revisions */}
+      <Dialog open={showRevisions} onOpenChange={setShowRevisions}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader><DialogTitle>Revision history</DialogTitle></DialogHeader>
+          {revisions.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-6 text-center">No revisions yet. They are created on every save.</p>
+          ) : (
+            <div className="space-y-2 max-h-[60vh] overflow-y-auto">
+              {revisions.map((r: any) => (
+                <div key={r.id} className="flex items-center justify-between gap-2 rounded-md border border-border p-3">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium truncate">{r.title || "Untitled"}</p>
+                    <p className="text-[11px] text-muted-foreground">{new Date(r.created_at).toLocaleString()}</p>
+                  </div>
+                  <Button size="sm" variant="outline" onClick={() => restoreRevision(r)}>Load</Button>
+                </div>
+              ))}
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>

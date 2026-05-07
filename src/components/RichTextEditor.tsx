@@ -31,6 +31,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 
 const SHAPES: Record<string, { label: string; radius: string; aspect: string }> = {
   original:   { label: "Original",   radius: "0",     aspect: "auto" },
@@ -53,6 +54,11 @@ const SizedImage = ImageExt.extend({
         default: null,
         parseHTML: (el) => el.getAttribute("style"),
         renderHTML: (attrs) => attrs.style ? { style: attrs.style } : {},
+      },
+      alt: {
+        default: "",
+        parseHTML: (el) => el.getAttribute("alt") || "",
+        renderHTML: (attrs) => ({ alt: attrs.alt || "" }),
       },
     };
   },
@@ -93,6 +99,8 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
   const [shape, setShape] = useState<string>("original");
   const [width, setWidth] = useState<string>("100%");
   const [customAspect, setCustomAspect] = useState<string>("16 / 9");
+  const [alt, setAlt] = useState<string>("");
+  const [focal, setFocal] = useState<{ x: number; y: number }>({ x: 50, y: 50 });
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -128,12 +136,12 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
 
   const addImageFromUrl = useCallback(() => {
     const url = window.prompt("Image URL:");
-    if (url) { setPendingUrl(url); setShape("original"); setWidth("100%"); setOptsOpen(true); }
+    if (url) { setPendingUrl(url); setShape("original"); setWidth("100%"); setAlt(""); setFocal({ x: 50, y: 50 }); setOptsOpen(true); }
   }, []);
 
   const insertPickedImage = useCallback((url: string | null) => {
     if (!url) return;
-    setPendingUrl(url); setShape("original"); setWidth("100%"); setOptsOpen(true);
+    setPendingUrl(url); setShape("original"); setWidth("100%"); setAlt(""); setFocal({ x: 50, y: 50 }); setOptsOpen(true);
   }, []);
 
   const confirmInsertImage = () => {
@@ -145,6 +153,7 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
     if (aspect !== "auto") {
       styleParts.push(`aspect-ratio:${aspect}`);
       styleParts.push(`object-fit:cover`);
+      styleParts.push(`object-position:${focal.x}% ${focal.y}%`);
       styleParts.push(`height:auto`);
     }
     if (cfg.radius && cfg.radius !== "0") styleParts.push(`border-radius:${cfg.radius}`);
@@ -153,10 +162,18 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
     const style = styleParts.join(";");
     editor.chain().focus().insertContent({
       type: "image",
-      attrs: { src: pendingUrl, "data-shape": shape, style, width: width || null },
+      attrs: { src: pendingUrl, "data-shape": shape, style, width: width || null, alt },
     }).run();
     setOptsOpen(false);
     setPendingUrl(null);
+  };
+
+  const handleFocalDrag = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.buttons !== 1 && e.type === "mousemove") return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width) * 100));
+    const y = Math.max(0, Math.min(100, ((e.clientY - rect.top) / rect.height) * 100));
+    setFocal({ x: Math.round(x), y: Math.round(y) });
   };
 
   const addLink = useCallback(() => {
@@ -323,22 +340,44 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
             <DialogTitle>Image options</DialogTitle>
           </DialogHeader>
           {pendingUrl && (
-            <div className="rounded-lg border border-border overflow-hidden bg-muted/30 p-3 flex justify-center">
-              <img
-                src={pendingUrl}
-                alt=""
-                style={{
-                  width: width || "100%",
-                  maxWidth: "100%",
-                  aspectRatio: shape === "custom" ? customAspect : SHAPES[shape]?.aspect,
-                  objectFit: (SHAPES[shape]?.aspect && SHAPES[shape].aspect !== "auto") || shape === "custom" ? "cover" : undefined,
-                  borderRadius: SHAPES[shape]?.radius,
-                  height: "auto",
-                }}
-              />
+            <div className="space-y-1">
+              <div
+                className="rounded-lg border border-border overflow-hidden bg-muted/30 p-3 flex justify-center cursor-crosshair select-none relative"
+                onMouseDown={handleFocalDrag}
+                onMouseMove={handleFocalDrag}
+                title="Click or drag to set focal point"
+              >
+                <div className="relative" style={{ width: width || "100%", maxWidth: "100%" }}>
+                  <img
+                    src={pendingUrl}
+                    alt={alt}
+                    style={{
+                      width: "100%",
+                      maxWidth: "100%",
+                      aspectRatio: shape === "custom" ? customAspect : SHAPES[shape]?.aspect,
+                      objectFit: (SHAPES[shape]?.aspect && SHAPES[shape].aspect !== "auto") || shape === "custom" ? "cover" : undefined,
+                      objectPosition: `${focal.x}% ${focal.y}%`,
+                      borderRadius: SHAPES[shape]?.radius,
+                      height: "auto",
+                      pointerEvents: "none",
+                    }}
+                  />
+                  {((SHAPES[shape]?.aspect && SHAPES[shape].aspect !== "auto") || shape === "custom") && (
+                    <div
+                      className="absolute h-3 w-3 rounded-full bg-primary ring-2 ring-background pointer-events-none"
+                      style={{ left: `calc(${focal.x}% - 6px)`, top: `calc(${focal.y}% - 6px)` }}
+                    />
+                  )}
+                </div>
+              </div>
+              <p className="text-[10px] text-muted-foreground">Drag inside preview to set focal point ({focal.x}%, {focal.y}%).</p>
             </div>
           )}
           <div className="space-y-3">
+            <div>
+              <Label className="text-xs">Alt text (for SEO &amp; accessibility)</Label>
+              <Textarea value={alt} onChange={(e) => setAlt(e.target.value)} rows={2} placeholder="Describe what's in the image" />
+            </div>
             <div>
               <Label className="text-xs">Shape</Label>
               <Select value={shape} onValueChange={setShape}>

@@ -58,8 +58,8 @@ export const Footer = forwardRef<HTMLElement>(function Footer(_, ref) {
 
         <div className="border-t pt-6 flex flex-col items-center gap-2 text-center text-xs text-muted-foreground md:flex-row md:justify-between md:text-left">
           <span>© {currentYear} Shishir Kumar Talukder. All rights reserved.</span>
-          <a href="mailto:shishir.talukder@research.org" className="inline-flex items-center gap-1 hover:text-primary transition-colors">
-            <Mail className="h-3 w-3" /> shishir.talukder@research.org
+          <a href="mailto:contact@shishirkumartalukder.com" className="inline-flex items-center gap-1 hover:text-primary transition-colors">
+            <Mail className="h-3 w-3" /> contact@shishirkumartalukder.com
           </a>
         </div>
       </div>

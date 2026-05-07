@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -11,7 +12,30 @@ serve(async (req) => {
   try {
     const { action, title, content, focusKeyword, excerpt } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+
+    // Load admin AI settings (provider/model/api key/base url) – fall back to Lovable AI.
+    let provider = "lovable";
+    let baseUrl = "https://ai.gateway.lovable.dev/v1";
+    let model = "google/gemini-3-flash-preview";
+    let apiKey = LOVABLE_API_KEY || "";
+    try {
+      const admin = createClient(
+        Deno.env.get("SUPABASE_URL")!,
+        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+      );
+      const { data: cfg } = await admin.from("ai_settings").select("*").maybeSingle();
+      if (cfg && cfg.enabled !== false) {
+        provider = cfg.provider || "lovable";
+        if (provider !== "lovable") {
+          baseUrl = (cfg.base_url || baseUrl).replace(/\/$/, "");
+          apiKey = cfg.api_key || apiKey;
+        }
+        if (cfg.model) model = cfg.model;
+      }
+    } catch (e) {
+      console.warn("Failed to load ai_settings, using defaults", e);
+    }
+    if (!apiKey) throw new Error("No AI API key configured");
 
     let systemPrompt = "";
     let userPrompt = "";
@@ -44,14 +68,14 @@ serve(async (req) => {
         });
     }
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const response = await fetch(`${baseUrl}/chat/completions`, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
+        model,
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
