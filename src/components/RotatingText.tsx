@@ -3,33 +3,60 @@ import { AnimatePresence, motion } from "framer-motion";
 
 interface RotatingTextProps {
   items: string[];
-  interval?: number;
+  /** delay between each word appearing (seconds) */
+  wordStagger?: number;
+  /** how long to hold the full sentence before switching (seconds) */
+  holdDuration?: number;
   className?: string;
 }
 
-export function RotatingText({ items, interval = 2600, className = "" }: RotatingTextProps) {
+export function RotatingText({
+  items,
+  wordStagger = 0.14,
+  holdDuration = 0.3,
+  className = "",
+}: RotatingTextProps) {
   const [index, setIndex] = useState(0);
+
+  const words = items[index]?.split(" ") ?? [];
+  const totalMs = (words.length * wordStagger + 0.35 + holdDuration) * 1000;
 
   useEffect(() => {
     if (items.length <= 1) return;
-    const id = setInterval(() => {
+    const id = setTimeout(() => {
       setIndex((i) => (i + 1) % items.length);
-    }, interval);
-    return () => clearInterval(id);
-  }, [items.length, interval]);
+    }, totalMs);
+    return () => clearTimeout(id);
+  }, [index, items.length, totalMs]);
 
   return (
-    <span className={`relative inline-block align-bottom min-w-[12rem] ${className}`} aria-live="polite">
+    <span className={`relative inline-block align-bottom ${className}`} aria-live="polite">
       <AnimatePresence mode="wait">
         <motion.span
           key={index}
-          initial={{ opacity: 0, x: 30, filter: "blur(4px)" }}
-          animate={{ opacity: 1, x: 0, filter: "blur(0px)" }}
-          exit={{ opacity: 0, x: -30, filter: "blur(4px)" }}
-          transition={{ duration: 0.4, ease: "easeOut" }}
-          className="inline-block bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent whitespace-nowrap"
+          initial="hidden"
+          animate="visible"
+          exit={{ opacity: 0, transition: { duration: 0.25 } }}
+          variants={{
+            hidden: {},
+            visible: { transition: { staggerChildren: wordStagger } },
+          }}
+          className="inline-block bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent"
         >
-          {items[index]}
+          {words.map((w, i) => (
+            <motion.span
+              key={i}
+              variants={{
+                hidden: { opacity: 0, y: 8, filter: "blur(6px)" },
+                visible: { opacity: 1, y: 0, filter: "blur(0px)" },
+              }}
+              transition={{ duration: 0.35, ease: "easeOut" }}
+              className="inline-block whitespace-pre"
+            >
+              {w}
+              {i < words.length - 1 ? " " : ""}
+            </motion.span>
+          ))}
         </motion.span>
       </AnimatePresence>
     </span>
