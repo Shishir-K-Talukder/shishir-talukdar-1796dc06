@@ -13,7 +13,7 @@ interface RotatingTextProps {
 export function RotatingText({
   items,
   wordStagger = 0.14,
-  holdDuration = 0.3,
+  holdDuration = 0.5,
   className = "",
 }: RotatingTextProps) {
   const [index, setIndex] = useState(0);
