@@ -41,7 +41,7 @@ export function RotatingText({
             hidden: {},
             visible: { transition: { staggerChildren: wordStagger } },
           }}
-          className="inline-block bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent"
+          className="inline-block"
         >
           {words.map((w, i) => (
             <motion.span
@@ -51,7 +51,7 @@ export function RotatingText({
                 visible: { opacity: 1, y: 0, filter: "blur(0px)" },
               }}
               transition={{ duration: 0.35, ease: "easeOut" }}
-              className="inline-block whitespace-pre"
+              className="inline-block whitespace-pre bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent"
             >
               {w}
               {i < words.length - 1 ? " " : ""}
