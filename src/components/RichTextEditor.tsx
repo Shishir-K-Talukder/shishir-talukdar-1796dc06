@@ -27,6 +27,36 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+const SHAPES: Record<string, { label: string; radius: string; aspect: string }> = {
+  original:   { label: "Original",   radius: "0",     aspect: "auto" },
+  square:     { label: "Square",     radius: "0.5rem",aspect: "1 / 1" },
+  round:      { label: "Round",      radius: "9999px",aspect: "1 / 1" },
+  oval:       { label: "Oval",       radius: "9999px",aspect: "16 / 10" },
+  horizontal: { label: "Horizontal", radius: "0.75rem",aspect: "16 / 9" },
+  vertical:   { label: "Vertical",   radius: "0.75rem",aspect: "3 / 4" },
+  custom:     { label: "Custom",     radius: "0.5rem",aspect: "auto" },
+};
+
+// Extend image to support width, shape, aspect ratio attributes rendered as inline style
+const SizedImage = ImageExt.extend({
+  addAttributes() {
+    return {
+      ...this.parent?.(),
+      width: { default: null, parseHTML: (el) => el.getAttribute("width") || el.style.width || null, renderHTML: (attrs) => attrs.width ? { width: attrs.width } : {} },
+      "data-shape": { default: "original", parseHTML: (el) => el.getAttribute("data-shape") || "original", renderHTML: (attrs) => ({ "data-shape": attrs["data-shape"] || "original" }) },
+      style: {
+        default: null,
+        parseHTML: (el) => el.getAttribute("style"),
+        renderHTML: (attrs) => attrs.style ? { style: attrs.style } : {},
+      },
+    };
+  },
+});
 
 interface RichTextEditorProps {
   content: string;
@@ -58,6 +88,11 @@ function ToolbarDivider() {
 
 export function RichTextEditor({ content, onChange, placeholder }: RichTextEditorProps) {
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [optsOpen, setOptsOpen] = useState(false);
+  const [pendingUrl, setPendingUrl] = useState<string | null>(null);
+  const [shape, setShape] = useState<string>("original");
+  const [width, setWidth] = useState<string>("100%");
+  const [customAspect, setCustomAspect] = useState<string>("16 / 9");
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -65,7 +100,7 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
       }),
       Underline,
       TextAlign.configure({ types: ["heading", "paragraph"] }),
-      ImageExt.configure({ inline: false, allowBase64: true }),
+      SizedImage.configure({ inline: false, allowBase64: true }),
       Link.configure({ openOnClick: false, HTMLAttributes: { rel: "noopener noreferrer nofollow" } }),
       Placeholder.configure({ placeholder: placeholder || "Start writing your blog post..." }),
       Highlight.configure({ multicolor: false }),
@@ -92,15 +127,37 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
   }, [content]);
 
   const addImageFromUrl = useCallback(() => {
-    if (!editor) return;
     const url = window.prompt("Image URL:");
-    if (url) editor.chain().focus().setImage({ src: url }).run();
-  }, [editor]);
+    if (url) { setPendingUrl(url); setShape("original"); setWidth("100%"); setOptsOpen(true); }
+  }, []);
 
   const insertPickedImage = useCallback((url: string | null) => {
-    if (!editor || !url) return;
-    editor.chain().focus().setImage({ src: url }).run();
-  }, [editor]);
+    if (!url) return;
+    setPendingUrl(url); setShape("original"); setWidth("100%"); setOptsOpen(true);
+  }, []);
+
+  const confirmInsertImage = () => {
+    if (!editor || !pendingUrl) return;
+    const cfg = SHAPES[shape] || SHAPES.original;
+    const aspect = shape === "custom" ? customAspect : cfg.aspect;
+    const styleParts: string[] = [];
+    if (width) styleParts.push(`width:${width}`);
+    if (aspect !== "auto") {
+      styleParts.push(`aspect-ratio:${aspect}`);
+      styleParts.push(`object-fit:cover`);
+      styleParts.push(`height:auto`);
+    }
+    if (cfg.radius && cfg.radius !== "0") styleParts.push(`border-radius:${cfg.radius}`);
+    styleParts.push(`display:block`);
+    styleParts.push(`max-width:100%`);
+    const style = styleParts.join(";");
+    editor.chain().focus().insertContent({
+      type: "image",
+      attrs: { src: pendingUrl, "data-shape": shape, style, width: width || null },
+    }).run();
+    setOptsOpen(false);
+    setPendingUrl(null);
+  };
 
   const addLink = useCallback(() => {
     if (!editor) return;
@@ -259,6 +316,58 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
         onOpenChange={setPickerOpen}
         hideTrigger
       />
+
+      <Dialog open={optsOpen} onOpenChange={setOptsOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Image options</DialogTitle>
+          </DialogHeader>
+          {pendingUrl && (
+            <div className="rounded-lg border border-border overflow-hidden bg-muted/30 p-3 flex justify-center">
+              <img
+                src={pendingUrl}
+                alt=""
+                style={{
+                  width: width || "100%",
+                  maxWidth: "100%",
+                  aspectRatio: shape === "custom" ? customAspect : SHAPES[shape]?.aspect,
+                  objectFit: (SHAPES[shape]?.aspect && SHAPES[shape].aspect !== "auto") || shape === "custom" ? "cover" : undefined,
+                  borderRadius: SHAPES[shape]?.radius,
+                  height: "auto",
+                }}
+              />
+            </div>
+          )}
+          <div className="space-y-3">
+            <div>
+              <Label className="text-xs">Shape</Label>
+              <Select value={shape} onValueChange={setShape}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {Object.entries(SHAPES).map(([k, v]) => (
+                    <SelectItem key={k} value={k}>{v.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {shape === "custom" && (
+              <div>
+                <Label className="text-xs">Custom aspect ratio (e.g. 4 / 3, 21 / 9)</Label>
+                <Input value={customAspect} onChange={(e) => setCustomAspect(e.target.value)} placeholder="16 / 9" />
+              </div>
+            )}
+            <div>
+              <Label className="text-xs">Width (px or %)</Label>
+              <Input value={width} onChange={(e) => setWidth(e.target.value)} placeholder="100% or 480px" />
+              <p className="text-[10px] text-muted-foreground mt-1">Leave at 100% for responsive. Image will be cropped to the chosen shape.</p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="ghost" onClick={() => setOptsOpen(false)}>Cancel</Button>
+            <Button type="button" onClick={confirmInsertImage}>Insert image</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
