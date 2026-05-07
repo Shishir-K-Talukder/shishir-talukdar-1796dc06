@@ -9,10 +9,10 @@ import { useProfile } from "@/hooks/useProfile";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect } from "react";
-import profileFallback from "@/assets/profile-placeholder.jpg";
-import labHeroImg from "@/assets/lab-hero.jpg";
-import researchAmrImg from "@/assets/research-amr.jpg";
-import researchEcoImg from "@/assets/research-ecology.jpg";
+import profileFallback from "@/assets/profile-placeholder.webp";
+import labHeroImg from "@/assets/lab-hero.webp";
+import researchAmrImg from "@/assets/research-amr.webp";
+import researchEcoImg from "@/assets/research-ecology.webp";
 
 export default function Index() {
   const profile = useProfile();
@@ -64,7 +64,7 @@ export default function Index() {
         <BentoCard className="md:col-span-2 lg:col-span-2 lg:row-span-2 flex min-h-[28rem] flex-col justify-between gap-6 relative overflow-hidden" delay={0}>
           {/* Background lab image */}
           <div className="absolute inset-0 z-0">
-            <img src={labHeroImg} alt="" className="h-full w-full object-cover opacity-10" width={800} height={800} />
+            <img src={labHeroImg} alt="" className="h-full w-full object-cover opacity-10" width={800} height={800} loading="lazy" decoding="async" />
             <div className="absolute inset-0 bg-gradient-to-t from-card via-card/90 to-card/60" />
           </div>
 
@@ -87,9 +87,10 @@ export default function Index() {
                     src={profileImg}
                     alt={`${profile.name} — ${profile.title}`}
                     className="h-44 w-44 sm:h-56 sm:w-56 lg:h-72 lg:w-72 xl:h-80 xl:w-80 rounded-full object-cover object-center"
-                    width={512}
-                    height={512}
+                    width={320}
+                    height={320}
                     loading="eager"
+                    decoding="async"
                     {...({ fetchpriority: "high" } as any)}
                   />
                 </div>

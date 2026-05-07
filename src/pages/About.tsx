@@ -2,8 +2,8 @@ import { BentoCard } from "@/components/BentoCard";
 import { GraduationCap, Bug, Microscope, Leaf, Heart, Globe, BookOpen } from "lucide-react";
 import { useProfile } from "@/hooks/useProfile";
 import { FloatingMicrobes } from "@/components/FloatingMicrobes";
-import profileFallback from "@/assets/profile-placeholder.jpg";
-import labHeroImg from "@/assets/lab-hero.jpg";
+import profileFallback from "@/assets/profile-placeholder.webp";
+import labHeroImg from "@/assets/lab-hero.webp";
 
 const timeline = [
   { year: "2024 – Present", title: "Research Microbiologist ", desc: "Leading independent research on antimicrobial resistance, microbial ecology, Forensic Science, Agricultural microbiology." },
