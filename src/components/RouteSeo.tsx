@@ -134,13 +134,6 @@ const routeSeo: Record<string, SeoConfig> = {
       url: "__SITE_URL__/contact",
     },
   },
-  "/SKT-admin": {
-    title: "Admin Login | Shishir Kumar Talukder",
-    description: "Admin access for site management.",
-    keywords: "admin login",
-    path: "/SKT-admin",
-    noindex: true,
-  },
 };
 
 export function RouteSeo() {
