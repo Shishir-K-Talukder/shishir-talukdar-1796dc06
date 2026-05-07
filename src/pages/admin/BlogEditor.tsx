@@ -473,6 +473,7 @@ export default function BlogEditor() {
             </div>
 
             {/* Right sidebar: SEO Score + AI */}
+            {!focusMode && (
             <div className="space-y-4">
               <Card>
                 <CardHeader className="pb-2 pt-4 px-4">
@@ -538,6 +539,7 @@ export default function BlogEditor() {
                 </CardContent>
               </Card>
             </div>
+            )}
           </div>
 
           <DialogFooter>
