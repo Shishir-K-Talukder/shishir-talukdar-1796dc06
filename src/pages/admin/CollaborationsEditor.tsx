@@ -51,6 +51,8 @@ export default function CollaborationsEditor() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["admin-collaborations"] });
+      qc.invalidateQueries({ queryKey: ["home-counts"] });
+      qc.invalidateQueries({ queryKey: ["collaborations"] });
       toast.success(editing ? "Collaboration updated" : "Collaboration added");
       close();
     },
@@ -64,6 +66,8 @@ export default function CollaborationsEditor() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["admin-collaborations"] });
+      qc.invalidateQueries({ queryKey: ["home-counts"] });
+      qc.invalidateQueries({ queryKey: ["collaborations"] });
       toast.success("Collaboration deleted");
     },
     onError: (e) => toast.error(e.message),
