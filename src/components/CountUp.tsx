@@ -14,6 +14,10 @@ export function CountUp({ to, suffix = "+", duration = 1500, className }: CountU
   const [value, setValue] = useState(0);
   const [pulse, setPulse] = useState(false);
   const startedRef = useRef(false);
+  const toRef = useRef(to);
+  useEffect(() => {
+    toRef.current = to;
+  }, [to]);
 
   useEffect(() => {
     const node = ref.current;
@@ -22,11 +26,12 @@ export function CountUp({ to, suffix = "+", duration = 1500, className }: CountU
     const animate = () => {
       const start = performance.now();
       const from = 0;
+      const target = toRef.current;
       const ease = (t: number) => 1 - Math.pow(1 - t, 3); // easeOutCubic
       let raf = 0;
       const tick = (now: number) => {
         const t = Math.min(1, (now - start) / duration);
-        setValue(Math.round(from + (to - from) * ease(t)));
+        setValue(Math.round(from + (target - from) * ease(t)));
         if (t < 1) raf = requestAnimationFrame(tick);
       };
       raf = requestAnimationFrame(tick);
@@ -51,7 +56,11 @@ export function CountUp({ to, suffix = "+", duration = 1500, className }: CountU
 
   // Re-pulse + recount when `to` changes after first reveal
   useEffect(() => {
-    if (!startedRef.current) return;
+    if (!startedRef.current) {
+      // Not visible yet — keep value at 0 so the entrance animation can play.
+      // The IntersectionObserver will animate to the latest `to` via toRef.
+      return;
+    }
     const start = performance.now();
     const from = value;
     const ease = (t: number) => 1 - Math.pow(1 - t, 3);
