@@ -5,6 +5,13 @@ import { FloatingMicrobes } from "@/components/FloatingMicrobes";
 import profileFallback from "@/assets/profile-placeholder.webp";
 import labHeroImg from "@/assets/lab-hero.webp";
 
+// Responsive Supabase image URL via the render endpoint.
+function supaImg(url: string, w: number, q = 75) {
+  if (!url || !url.includes("/storage/v1/object/public/")) return url;
+  const rendered = url.replace("/storage/v1/object/public/", "/storage/v1/render/image/public/");
+  return `${rendered}?width=${w}&quality=${q}&resize=cover`;
+}
+
 const timeline = [
   { year: "2024 – Present", title: "Research Microbiologist ", desc: "Leading independent research on antimicrobial resistance, microbial ecology, Forensic Science, Agricultural microbiology." },
   { year: "2021 – 2024", title: "BSc In Microbiology", desc: "International Institute of Applied Science and Technology, Rangpur, Bangladesh." },
@@ -20,6 +27,11 @@ const skills = [
 export default function About() {
   const profile = useProfile();
   const profileImg = profile.profileImage || profileFallback;
+  const isRemoteProfile = !!profile.profileImage;
+  const profileSrc = isRemoteProfile ? supaImg(profileImg, 320) : profileImg;
+  const profileSrcSet = isRemoteProfile
+    ? `${supaImg(profileImg, 224)} 224w, ${supaImg(profileImg, 320)} 320w, ${supaImg(profileImg, 416)} 416w, ${supaImg(profileImg, 576)} 576w`
+    : undefined;
   return (
     <div className="container py-12 md:py-20">
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -34,12 +46,15 @@ export default function About() {
               <div className="rounded-full bg-gradient-to-br from-primary via-accent to-primary p-[3px] shadow-[0_10px_40px_-10px_hsl(var(--primary)/0.55)] transition-transform duration-500 group-hover:scale-105">
                 <div className="rounded-full bg-card p-1">
                   <img
-                    src={profileImg}
+                    src={profileSrc}
+                    srcSet={profileSrcSet}
+                    sizes="(min-width: 1280px) 288px, (min-width: 1024px) 256px, (min-width: 640px) 208px, 160px"
                     alt={profile.name}
                     className="h-40 w-40 sm:h-52 sm:w-52 lg:h-64 lg:w-64 xl:h-72 xl:w-72 rounded-full object-cover object-center"
-                    width={512}
-                    height={512}
+                    width={320}
+                    height={320}
                     loading="eager"
+                    decoding="async"
                     {...({ fetchpriority: "high" } as any)}
                   />
                 </div>
