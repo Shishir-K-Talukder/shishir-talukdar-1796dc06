@@ -86,7 +86,10 @@ export default function ResearchEditor() {
 
   function openNew() {
     setEditing(null);
-    setForm(emptyProject);
+    const nextOrder = projects.length
+      ? Math.max(...projects.map((p) => p.sort_order ?? 0)) + 1
+      : 1;
+    setForm({ ...emptyProject, sort_order: nextOrder });
     setTagsInput("");
     setOpen(true);
   }
