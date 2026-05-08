@@ -31,6 +31,43 @@ function AdUnit({ adClient, adSlot, className }: { adClient: string; adSlot: str
   );
 }
 
+function BlogJsonLd({ posts }: { posts: Array<{ id: string; title: string; slug: string; excerpt?: string | null; published_at?: string | null; cover_image_url?: string | null; tags?: string[] | null; content?: string | null }> }) {
+  const origin = typeof window !== "undefined" ? window.location.origin : "https://shishirkumartalukder.com";
+  const itemList = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: "Microbiology Blog Posts",
+    itemListElement: posts.slice(0, 50).map((p, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      url: `${origin}/blog/${p.slug}`,
+      name: p.title,
+    })),
+  };
+  const blogSchema = {
+    "@context": "https://schema.org",
+    "@type": "Blog",
+    name: "Microbiology Blog | Shishir Kumar Talukder",
+    url: `${origin}/blog`,
+    blogPost: posts.slice(0, 20).map((p) => ({
+      "@type": "BlogPosting",
+      headline: p.title,
+      url: `${origin}/blog/${p.slug}`,
+      description: p.excerpt || undefined,
+      image: p.cover_image_url || undefined,
+      datePublished: p.published_at || undefined,
+      keywords: (p.tags || []).join(", ") || undefined,
+      author: { "@type": "Person", name: "Shishir Kumar Talukder" },
+    })),
+  };
+  return (
+    <Helmet>
+      <script type="application/ld+json">{JSON.stringify(blogSchema)}</script>
+      <script type="application/ld+json">{JSON.stringify(itemList)}</script>
+    </Helmet>
+  );
+}
+
 export default function Blog() {
   const [searchParams, setSearchParams] = useSearchParams();
   const activeCategory = searchParams.get("category") || "all";
