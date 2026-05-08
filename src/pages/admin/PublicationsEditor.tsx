@@ -77,7 +77,15 @@ export default function PublicationsEditor() {
     onError: (e) => toast.error(e.message),
   });
 
-  function openNew() { setEditing(null); setForm(empty); setTopicsInput(""); setOpen(true); }
+  function openNew() {
+    setEditing(null);
+    const nextOrder = pubs.length
+      ? Math.max(...pubs.map((p) => p.sort_order ?? 0)) + 1
+      : 1;
+    setForm({ ...empty, sort_order: nextOrder });
+    setTopicsInput("");
+    setOpen(true);
+  }
   function openEdit(p: Publication) {
     setEditing(p);
     setForm({ title: p.title, journal: p.journal, year: p.year, doi: p.doi, abstract: p.abstract, topics: p.topics, sort_order: p.sort_order, image_url: (p as any).image_url || null });
