@@ -14,9 +14,22 @@ import labHeroImg from "@/assets/lab-hero.webp";
 import researchAmrImg from "@/assets/research-amr.webp";
 import researchEcoImg from "@/assets/research-ecology.webp";
 
+// Build a responsive Supabase image URL using the render endpoint.
+// Falls back to the original URL for non-Supabase sources.
+function supaImg(url: string, w: number, q = 75) {
+  if (!url || !url.includes("/storage/v1/object/public/")) return url;
+  const rendered = url.replace("/storage/v1/object/public/", "/storage/v1/render/image/public/");
+  return `${rendered}?width=${w}&quality=${q}&resize=cover`;
+}
+
 export default function Index() {
   const profile = useProfile();
   const profileImg = profile.profileImage || profileFallback;
+  const isRemoteProfile = !!profile.profileImage;
+  const profileSrc = isRemoteProfile ? supaImg(profileImg, 320) : profileImg;
+  const profileSrcSet = isRemoteProfile
+    ? `${supaImg(profileImg, 224)} 224w, ${supaImg(profileImg, 320)} 320w, ${supaImg(profileImg, 480)} 480w, ${supaImg(profileImg, 640)} 640w`
+    : undefined;
 
   const { data: counts, refetch } = useQuery({
     queryKey: ["home-counts"],
@@ -95,7 +108,9 @@ export default function Index() {
               <div className="rounded-full bg-gradient-to-br from-primary via-accent to-primary p-[3px] shadow-[0_10px_40px_-10px_hsl(var(--primary)/0.55)] transition-transform duration-500 group-hover:scale-105">
                 <div className="rounded-full bg-card p-1">
                   <img
-                    src={profileImg}
+                    src={profileSrc}
+                    srcSet={profileSrcSet}
+                    sizes="(min-width: 1280px) 320px, (min-width: 1024px) 288px, (min-width: 640px) 224px, 176px"
                     alt={`${profile.name} — ${profile.title}`}
                     className="h-44 w-44 sm:h-56 sm:w-56 lg:h-72 lg:w-72 xl:h-80 xl:w-80 rounded-full object-cover object-center"
                     width={320}
@@ -163,8 +178,8 @@ export default function Index() {
           <p className="text-muted-foreground leading-relaxed text-sm mb-4">
             {profile.bio || `I'm ${profile.name}, a ${profile.title.toLowerCase()} dedicated to understanding and harnessing the power of microorganisms. With experience in antimicrobial resistance and bacterial pathogenesis, I combine cutting-edge techniques with innovative approaches to address global health challenges.`}
           </p>
-          <Link to="/about" className="text-sm font-medium text-primary hover:underline inline-flex items-center gap-1">
-            Read more <ArrowRight className="h-3 w-3" />
+          <Link to="/about" aria-label="Read more about Shishir Kumar Talukder" className="text-sm font-medium text-primary hover:underline inline-flex items-center gap-1">
+            Read more about me <ArrowRight className="h-3 w-3" />
           </Link>
         </BentoCard>
 
@@ -179,8 +194,8 @@ export default function Index() {
           <p className="text-sm text-muted-foreground mb-3 leading-relaxed">
             Investigating emerging patterns of antimicrobial resistance in clinical settings using advanced genomic approaches.
           </p>
-          <Link to="/research" className="text-sm font-medium text-primary hover:underline inline-flex items-center gap-1">
-            Learn More <ArrowRight className="h-3 w-3" />
+          <Link to="/research" aria-label="Learn more about novel antibiotic resistance research" className="text-sm font-medium text-primary hover:underline inline-flex items-center gap-1">
+            Learn more about AMR research <ArrowRight className="h-3 w-3" />
           </Link>
         </BentoCard>
 
@@ -195,8 +210,8 @@ export default function Index() {
           <p className="text-sm text-muted-foreground mb-3 leading-relaxed">
             Exploring the complex interactions within microbial communities in extreme environments.
           </p>
-          <Link to="/research" className="text-sm font-medium text-primary hover:underline inline-flex items-center gap-1">
-            Learn More <ArrowRight className="h-3 w-3" />
+          <Link to="/research" aria-label="Learn more about microbial ecology dynamics research" className="text-sm font-medium text-primary hover:underline inline-flex items-center gap-1">
+            Learn more about ecology research <ArrowRight className="h-3 w-3" />
           </Link>
         </BentoCard>
 
