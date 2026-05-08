@@ -73,7 +73,14 @@ export default function CollaborationsEditor() {
     onError: (e) => toast.error(e.message),
   });
 
-  function openNew() { setEditing(null); setForm(empty); setOpen(true); }
+  function openNew() {
+    setEditing(null);
+    const nextOrder = collabs.length
+      ? Math.max(...collabs.map((c) => c.sort_order ?? 0)) + 1
+      : 1;
+    setForm({ ...empty, sort_order: nextOrder });
+    setOpen(true);
+  }
   function openEdit(c: Collaboration) {
     setEditing(c);
     setForm({ institution: c.institution, country: c.country, description: c.description, focus: c.focus, sort_order: c.sort_order, image_url: (c as any).image_url || null });
