@@ -26,6 +26,11 @@ export default function Index() {
         supabase.from("publications").select("*", { count: "exact", head: true }),
         supabase.from("collaborations").select("*", { count: "exact", head: true }),
       ]);
+
+      if (research.error) throw research.error;
+      if (publications.error) throw publications.error;
+      if (collaborations.error) throw collaborations.error;
+
       return {
         research: research.count ?? 0,
         publications: publications.count ?? 0,
@@ -33,6 +38,8 @@ export default function Index() {
       };
     },
     staleTime: 0,
+    refetchInterval: 15000,
+    refetchIntervalInBackground: true,
     refetchOnMount: "always",
     refetchOnWindowFocus: true,
   });
@@ -44,7 +51,11 @@ export default function Index() {
       .on("postgres_changes", { event: "*", schema: "public", table: "research_projects" }, () => refetch())
       .on("postgres_changes", { event: "*", schema: "public", table: "publications" }, () => refetch())
       .on("postgres_changes", { event: "*", schema: "public", table: "collaborations" }, () => refetch())
-      .subscribe();
+      .subscribe((status) => {
+        if (status === "SUBSCRIBED") {
+          void refetch();
+        }
+      });
     return () => {
       supabase.removeChannel(channel);
     };
