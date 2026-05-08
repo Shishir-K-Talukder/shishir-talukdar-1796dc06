@@ -55,6 +55,8 @@ export default function PublicationsEditor() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["admin-publications"] });
+      qc.invalidateQueries({ queryKey: ["home-counts"] });
+      qc.invalidateQueries({ queryKey: ["publications"] });
       toast.success(editing ? "Publication updated" : "Publication added");
       close();
     },
@@ -68,6 +70,8 @@ export default function PublicationsEditor() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["admin-publications"] });
+      qc.invalidateQueries({ queryKey: ["home-counts"] });
+      qc.invalidateQueries({ queryKey: ["publications"] });
       toast.success("Publication deleted");
     },
     onError: (e) => toast.error(e.message),

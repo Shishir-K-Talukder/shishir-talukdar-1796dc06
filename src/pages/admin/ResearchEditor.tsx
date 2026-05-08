@@ -62,6 +62,8 @@ export default function ResearchEditor() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["admin-research"] });
+      qc.invalidateQueries({ queryKey: ["home-counts"] });
+      qc.invalidateQueries({ queryKey: ["research"] });
       toast.success(editing ? "Project updated" : "Project added");
       close();
     },
@@ -75,6 +77,8 @@ export default function ResearchEditor() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["admin-research"] });
+      qc.invalidateQueries({ queryKey: ["home-counts"] });
+      qc.invalidateQueries({ queryKey: ["research"] });
       toast.success("Project deleted");
     },
     onError: (e) => toast.error(e.message),
