@@ -207,6 +207,7 @@ export function Navbar() {
                 <Link
                   key={l.to}
                   to={l.to}
+                  aria-label={l.label}
                   className="relative flex items-center justify-center"
                 >
                   {active ? (
