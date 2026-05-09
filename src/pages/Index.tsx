@@ -105,14 +105,14 @@ export default function Index() {
                 className="absolute inset-0 -z-10 rounded-full bg-primary/40 blur-3xl opacity-70 group-hover:opacity-100 transition-opacity duration-500"
               />
               {/* Gradient ring frame */}
-              <div className="rounded-full bg-gradient-to-br from-primary via-accent to-primary p-[3px] shadow-[0_10px_40px_-10px_hsl(var(--primary)/0.55)] transition-transform duration-500 group-hover:scale-105">
-                <div className="rounded-full bg-card p-1">
+              <div className="rounded-3xl bg-gradient-to-br from-primary via-accent to-primary p-[3px] shadow-[0_10px_40px_-10px_hsl(var(--primary)/0.55)] transition-transform duration-500 group-hover:scale-105">
+                <div className="rounded-[20px] bg-card p-1">
                   <img
                     src={profileSrc}
                     srcSet={profileSrcSet}
                     sizes="(min-width: 1280px) 320px, (min-width: 1024px) 288px, (min-width: 640px) 224px, 176px"
                     alt={`${profile.name} — ${profile.title}`}
-                    className="h-44 w-44 sm:h-56 sm:w-56 lg:h-72 lg:w-72 xl:h-80 xl:w-80 rounded-full object-contain bg-card"
+                    className="h-56 w-44 sm:h-72 sm:w-56 lg:h-80 lg:w-64 xl:h-96 xl:w-72 rounded-[18px] object-cover object-center bg-card"
                     width={320}
                     height={320}
                     loading="eager"
