@@ -50,7 +50,7 @@ export default function About() {
                     srcSet={profileSrcSet}
                     sizes="(min-width: 1280px) 288px, (min-width: 1024px) 256px, (min-width: 640px) 208px, 160px"
                     alt={profile.name}
-                    className="h-40 w-40 sm:h-52 sm:w-52 lg:h-64 lg:w-64 xl:h-72 xl:w-72 rounded-full object-cover object-center"
+                    className="h-40 w-40 sm:h-52 sm:w-52 lg:h-64 lg:w-64 xl:h-72 xl:w-72 rounded-full object-contain bg-card"
                     width={320}
                     height={320}
                     loading="eager"
