@@ -112,7 +112,7 @@ export default function Index() {
                     srcSet={profileSrcSet}
                     sizes="(min-width: 1280px) 320px, (min-width: 1024px) 288px, (min-width: 640px) 224px, 176px"
                     alt={`${profile.name} — ${profile.title}`}
-                    className="h-44 w-44 sm:h-56 sm:w-56 lg:h-64 lg:w-64 xl:h-72 xl:w-72 rounded-full object-contain object-center bg-card"
+                    className="h-44 w-44 sm:h-56 sm:w-56 lg:h-64 lg:w-64 xl:h-72 xl:w-72 rounded-full object-cover object-top bg-card"
                     width={320}
                     height={320}
                     loading="eager"
