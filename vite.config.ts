@@ -23,20 +23,5 @@ export default defineConfig(({ mode }) => ({
   build: {
     target: "es2020",
     cssCodeSplit: true,
-    rollupOptions: {
-      output: {
-        manualChunks(id) {
-          if (!id.includes("node_modules")) return;
-          if (id.includes("react-dom") || id.includes("scheduler") || id.includes("react/")) return "react-vendor";
-          if (id.includes("react-router")) return "router";
-          if (id.includes("@supabase") || id.includes("@tanstack")) return "data-vendor";
-          if (id.includes("framer-motion")) return "motion";
-          if (id.includes("lucide-react")) return "icons";
-          if (id.includes("@radix-ui")) return "radix";
-          if (id.includes("react-helmet")) return "helmet";
-          return "vendor";
-        },
-      },
-    },
   },
 }));
