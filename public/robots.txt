@@ -37,4 +37,4 @@ Allow: /
 User-agent: Bytespider
 Allow: /
 
-Sitemap: https://shishir-talukdar.lovable.app/sitemap.xml
+Sitemap: https://shishirkumartalukder.com/sitemap.xml
