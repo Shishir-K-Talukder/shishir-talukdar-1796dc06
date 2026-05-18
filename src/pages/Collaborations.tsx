@@ -36,7 +36,7 @@ export default function Collaborations() {
                 <span className="text-xs font-mono text-muted-foreground">{c.country}</span>
               </div>
               <div className="flex-1">
-                <h3 className="font-bold font-heading mb-1">{c.institution}</h3>
+                <h2 className="font-bold font-heading mb-1 text-base">{c.institution}</h2>
                 <p className="text-sm text-muted-foreground leading-relaxed">{c.description}</p>
               </div>
               <div className="flex items-center justify-between">

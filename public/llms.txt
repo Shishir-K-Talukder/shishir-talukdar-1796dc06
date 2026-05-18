@@ -1,0 +1,18 @@
+# Shishir Kumar Talukder
+
+> Portfolio and research hub of Shishir Kumar Talukder, a research microbiologist working on antimicrobial resistance, bacterial pathogenesis, and microbial ecology.
+
+## Pages
+
+- [About](/about): Background, research philosophy, education, and skills.
+- [Research](/research): Active and past research projects.
+- [Publications](/publications): Peer-reviewed papers and preprints.
+- [Collaborations](/collaborations): Institutional and academic collaborations.
+- [Blog](/blog): Articles on microbiology, AMR, and lab techniques.
+- [Contact](/contact): Request collaboration or get in touch.
+
+## Blog
+
+- [Understanding Antimicrobial Resistance](/blog/understanding-antimicrobial-resistance)
+- [CRISPR in Microbiology](/blog/crispr-in-microbiology)
+- [Essential Aseptic Techniques](/blog/essential-aseptic-techniques)

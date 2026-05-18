@@ -149,7 +149,7 @@ export default function Contact() {
         <div className="flex flex-col gap-4">
           <BentoCard delay={0.1}>
             <Mail className="h-6 w-6 text-primary mb-3" />
-            <h3 className="font-bold font-heading mb-1">Email</h3>
+            <h2 className="font-bold font-heading mb-1 text-base">Email</h2>
             <a href="mailto:shishir.talukder@research.org" className="text-sm text-muted-foreground hover:text-primary transition-colors">
               contact@shishirkumartalukder.com
 
@@ -157,18 +157,18 @@ export default function Contact() {
           </BentoCard>
           <BentoCard delay={0.15}>
             <Building2 className="h-6 w-6 text-primary mb-3" />
-            <h3 className="font-bold font-heading mb-1">Affiliation</h3>
+            <h2 className="font-bold font-heading mb-1 text-base">Affiliation</h2>
             <p className="text-sm text-muted-foreground">Department of Microbiology</p>
             <p className="text-sm text-muted-foreground">Advanced Research Laboratory</p>
           </BentoCard>
           <BentoCard delay={0.2}>
             <MapPin className="h-6 w-6 text-accent mb-3" />
-            <h3 className="font-bold font-heading mb-1">Location</h3>
+            <h2 className="font-bold font-heading mb-1 text-base">Location</h2>
             <p className="text-sm text-muted-foreground">Dhaka, Bangladesh</p>
           </BentoCard>
           <BentoCard delay={0.25}>
             <Clock className="h-6 w-6 text-muted-foreground mb-3" />
-            <h3 className="font-bold font-heading mb-1">Response Time</h3>
+            <h2 className="font-bold font-heading mb-1 text-base">Response Time</h2>
             <p className="text-sm text-muted-foreground">Typically within 48 hours</p>
           </BentoCard>
         </div>
