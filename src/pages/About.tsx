@@ -61,7 +61,9 @@ export default function About() {
               </div>
             </div>
             <div className="text-center sm:text-left">
-              <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold font-heading">{profile.name}</h1>
+              <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold font-heading">
+                {profile.name} — {profile.title || "Research Microbiologist"}
+              </h1>
               <p className="text-muted-foreground">{profile.title}</p>
             </div>
           </div>
