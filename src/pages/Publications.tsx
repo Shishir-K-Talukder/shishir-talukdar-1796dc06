@@ -50,7 +50,7 @@ export default function Publications() {
                 <BookOpen className="h-5 w-5 text-primary" />
               </div>
               <div className="flex-1">
-                <h3 className="font-bold font-heading mb-1">{p.title}</h3>
+                <h2 className="font-bold font-heading mb-1 text-base">{p.title}</h2>
                 <p className="text-sm text-muted-foreground mb-2">{p.abstract}</p>
                 <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
                   <span className="font-medium text-foreground">{p.journal}</span>
