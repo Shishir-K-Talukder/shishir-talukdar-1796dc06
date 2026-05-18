@@ -52,7 +52,7 @@ export default function Research() {
                   <Badge variant="outline" className={statusColor[p.status]}>{p.status}</Badge>
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-bold font-heading mb-2">{p.title}</h3>
+                  <h2 className="font-bold font-heading mb-2 text-base">{p.title}</h2>
                   <p className="text-sm text-muted-foreground leading-relaxed">{p.description}</p>
                 </div>
                 <div className="flex flex-wrap gap-2">
