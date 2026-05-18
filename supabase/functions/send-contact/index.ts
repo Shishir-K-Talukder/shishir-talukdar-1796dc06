@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { z } from "https://esm.sh/zod@3.23.8";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -10,12 +11,21 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { name, email, institution, subject, message } = await req.json();
-    if (!name || !email || !subject || !message) {
-      return new Response(JSON.stringify({ error: "Missing required fields" }), {
+    const noCtrl = (s: string) => !/[\r\n]/.test(s);
+    const ContactSchema = z.object({
+      name: z.string().trim().min(1).max(200).refine(noCtrl, "Invalid characters"),
+      email: z.string().trim().email().max(254).refine(noCtrl, "Invalid characters"),
+      institution: z.string().trim().max(300).refine(noCtrl, "Invalid characters").optional().default(""),
+      subject: z.string().trim().min(1).max(300).refine(noCtrl, "Invalid characters"),
+      message: z.string().trim().min(1).max(5000),
+    });
+    const parsed = ContactSchema.safeParse(await req.json());
+    if (!parsed.success) {
+      return new Response(JSON.stringify({ error: "Invalid input" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+    const { name, email, institution, subject, message } = parsed.data;
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
@@ -106,14 +116,14 @@ serve(async (req) => {
       return new Response(JSON.stringify({
         success: true,
         email_sent: false,
-        smtp_error: smtpError.message,
+        reason: "Delivery error",
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
   } catch (e) {
     console.error("Function error:", e);
-    return new Response(JSON.stringify({ error: e.message }), {
+    return new Response(JSON.stringify({ error: "Internal error" }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
