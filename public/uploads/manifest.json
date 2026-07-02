@@ -1,6 +1,12 @@
 {
   "images": [
     {
+      "name": "Food Sampleing",
+      "file": "Food_Sampleing.png",
+      "alt": "Food Sampleing",
+      "category": "general"
+    },
+    {
       "name": "Microbiology in Bangladesh",
       "file": "blog1.png",
       "alt": "3D illustration of antibiotic-resistant bacteria surrounded by antibiotics in a futuristic medical microbiology laboratory.",
