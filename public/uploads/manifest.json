@@ -1,6 +1,12 @@
 {
   "images": [
     {
+      "name": "Personal",
+      "file": "Picture.jpg",
+      "alt": "Personal",
+      "category": "general"
+    },
+    {
       "name": "Food Sampleing",
       "file": "Food_Sampleing.png",
       "alt": "Food Sampleing",
